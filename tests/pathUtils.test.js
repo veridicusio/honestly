@@ -16,9 +16,9 @@ describe('PathUtils', () => {
     });
 
     it('should throw error for invalid input', () => {
-      expect(() => PathUtils.normalize('')).toThrow('Invalid path');
-      expect(() => PathUtils.normalize(null)).toThrow('Invalid path');
-      expect(() => PathUtils.normalize(123)).toThrow('Invalid path');
+      expect(() => PathUtils.normalize('')).toThrow('Invalid path: must be a non-empty string');
+      expect(() => PathUtils.normalize(null)).toThrow('Invalid path: must be a non-empty string');
+      expect(() => PathUtils.normalize(123)).toThrow('Invalid path: must be a non-empty string');
     });
   });
 
@@ -74,8 +74,8 @@ describe('PathUtils', () => {
     });
 
     it('should throw error for invalid input', () => {
-      expect(() => PathUtils.dirname('')).toThrow('Invalid path');
-      expect(() => PathUtils.dirname(null)).toThrow('Invalid path');
+      expect(() => PathUtils.dirname('')).toThrow('Invalid path: must be a non-empty string');
+      expect(() => PathUtils.dirname(null)).toThrow('Invalid path: must be a non-empty string');
     });
   });
 
@@ -91,7 +91,7 @@ describe('PathUtils', () => {
     });
 
     it('should throw error for invalid input', () => {
-      expect(() => PathUtils.basename('')).toThrow('Invalid path');
+      expect(() => PathUtils.basename('')).toThrow('Invalid path: must be a non-empty string');
     });
   });
 
@@ -107,7 +107,7 @@ describe('PathUtils', () => {
     });
 
     it('should throw error for invalid input', () => {
-      expect(() => PathUtils.extname('')).toThrow('Invalid path');
+      expect(() => PathUtils.extname('')).toThrow('Invalid path: must be a non-empty string');
     });
   });
 
@@ -125,7 +125,7 @@ describe('PathUtils', () => {
     });
 
     it('should throw error for invalid input', () => {
-      expect(() => PathUtils.parse('')).toThrow('Invalid path');
+      expect(() => PathUtils.parse('')).toThrow('Invalid path: must be a non-empty string');
     });
   });
 
@@ -187,8 +187,8 @@ describe('PathUtils', () => {
     });
 
     it('should throw error for invalid input', () => {
-      expect(() => PathUtils.sanitize('')).toThrow('Invalid path');
-      expect(() => PathUtils.sanitize(null)).toThrow('Invalid path');
+      expect(() => PathUtils.sanitize('')).toThrow('Invalid path: must be a non-empty string');
+      expect(() => PathUtils.sanitize(null)).toThrow('Invalid path: must be a non-empty string');
     });
   });
 
@@ -284,8 +284,8 @@ describe('PathUtils', () => {
     });
 
     it('should throw error for invalid input', () => {
-      expect(() => PathUtils.ensureDir('')).toThrow('Invalid directory path');
-      expect(() => PathUtils.ensureDir(null)).toThrow('Invalid directory path');
+      expect(() => PathUtils.ensureDir('')).toThrow('Invalid directory path: must be a non-empty string');
+      expect(() => PathUtils.ensureDir(null)).toThrow('Invalid directory path: must be a non-empty string');
     });
   });
 
