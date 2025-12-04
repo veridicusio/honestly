@@ -11,5 +11,8 @@ numpy==1.26.4
 cryptography>=41.0.0
 qrcode[pil]>=7.4.2
 pyjwt>=2.8.0
+# Testing dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
 # Note: For production ZK proofs, consider zkpy or circom integration
 # Note: For production Fabric SDK, use fabric-sdk-py or hfc
