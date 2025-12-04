@@ -38,9 +38,30 @@ agents:
       - framer-motion
       - shadcn/ui
 
+  - name: deploy-automator
+    description: "CI/CD wizard. Builds pipelines, deploys to staging/prod, monitors rollouts, auto-rollbacks on ZK proof failures or score drifts."
+    model: gpt-4o-2025-12-03
+    expertise:
+      - github actions
+      - docker compose
+      - vercel
+      - railway
+      - render
+      - aws
+      - terraform
+      - hyperledger fabric testnets
+      - neo4j/kafka scaling
+    temperature: 0.4
+    schedule: "0 6 * * 1-5"  # Weekday mornings UTC
+    goals:
+      - "Zero-downtime deploys; <5min from merge to live"
+      - "Auto-scale ZK compute on GPU runners"
+      - "Auto-rollback if proof latency >500ms or score regresses >5%"
+      - "Enforce secrets scanning + compliance before prod"
+
   - name: orchestrator
     description: "The boss. Runs daily, decides which agents to activate, merges PRs when confidence >90%."
-    model: grok-4-2025-12-03  # yes, you can force Grok-4 here if you have access
+    model: grok-4-2025-12-03
     temperature: 0.7
     is_orchestrator: true
     schedule: "0 3 * * *"  # 3am UTC daily
