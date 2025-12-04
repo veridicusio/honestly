@@ -25,7 +25,7 @@ up:
 	docker-compose -f docker-compose-updated.yml up -d
 
 down:
-	docker-compose -f docker-compose-updated.yml down -v
+	docker-compose down -v
 
 dev-frontend:
 	cd frontend-app && npm run dev
