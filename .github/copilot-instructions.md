@@ -35,7 +35,7 @@ cd backend-python && pip install -r requirements.txt
 
 ### Running Services
 ```bash
-make up                     # Start Docker infrastructure (uses docker-compose-updated.yml if exists, else docker-compose.yml)
+make up                     # Start Docker infrastructure (Note: Makefile references docker-compose-updated.yml, may need to use docker-compose.yml)
 make dev-frontend           # Start React dev server (port 3000)
 make dev-backend-gql        # Start GraphQL server (port 4000)
 make dev-backend-py         # Start Python API (port 8000)
@@ -72,6 +72,7 @@ make down                   # Stop Docker services
 
 ### Frontend (React/JavaScript)
 - Use functional components with hooks
+- Always import React at the top of component files
 - Follow React best practices
 - Use ES6+ features (arrow functions, destructuring, async/await)
 - Component files should use JSX extension
@@ -81,6 +82,8 @@ make down                   # Stop Docker services
 **Example:**
 ```javascript
 // frontend-app/src/components/AppCard.jsx
+import React from 'react';
+
 const AppCard = ({ app }) => {
   const { name, platform, whistlerScore, grade } = app;
   
