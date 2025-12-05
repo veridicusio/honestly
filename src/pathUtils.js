@@ -156,7 +156,7 @@ class PathUtils {
         resolvedPath === resolvedBase ||
         resolvedPath.startsWith(resolvedBase + path.sep)
       )) {
-        throw new Error('Path traversal detected: path is outside base directory');
+        throw new Error(`Path traversal detected: '${inputPath}' attempts to access outside base directory '${baseDir}'`);
       }
       
       return resolvedPath;
