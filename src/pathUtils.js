@@ -152,7 +152,10 @@ class PathUtils {
       const resolvedPath = path.resolve(resolvedBase, normalized);
       
       // Check if the resolved path is within the base directory
-      if (!resolvedPath.startsWith(resolvedBase)) {
+      if (!(
+        resolvedPath === resolvedBase ||
+        resolvedPath.startsWith(resolvedBase + path.sep)
+      )) {
         throw new Error('Path traversal detected: path is outside base directory');
       }
       
