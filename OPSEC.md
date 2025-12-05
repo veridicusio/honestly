@@ -684,9 +684,9 @@ Recommended Apps:
 
 3. Session
    - No phone number required
-   - Onion-routed
    - Anonymous
-   - Decentralized
+   - Decentralized routing
+   - Open source
 
 Setup Tips:
 - Verify safety numbers/keys
