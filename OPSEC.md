@@ -118,7 +118,10 @@ git log --all --full-history -- "*email*"
 
 # Use git-filter-repo to remove sensitive history
 pip install git-filter-repo
-git filter-repo --path sensitive-file --invert-paths
+# Remove a sensitive file from history
+git filter-repo --path sensitive-file
+# Or to keep everything except sensitive files, use:
+# git filter-repo --invert-paths --path sensitive-file
 ```
 
 #### 4. Browser and Network Security
@@ -592,10 +595,14 @@ Privacy-Enhanced:
 1. Aztec Network
    - zkMoney for private transfers
    - Ethereum-based
+   - https://aztec.network
 
-2. Tornado Cash (use with caution)
-   - Note: Regulatory scrutiny
-   - Check legal status in your jurisdiction
+2. Railgun
+   - Privacy system for DeFi
+   - Check compliance in your jurisdiction
+   - https://railgun.org
+
+**IMPORTANT**: Some privacy-enhancing protocols have faced regulatory actions (e.g., Tornado Cash sanctioned by OFAC in 2022). Always verify the legal status of any privacy tool in your jurisdiction before use. Consult legal counsel for compliance with sanctions and AML/KYC requirements.
 ```
 
 ### Payment Processing

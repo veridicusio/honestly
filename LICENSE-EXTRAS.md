@@ -118,9 +118,14 @@ Commercial use is permitted under AGPL-3.0-only, provided:
 Violation of these attribution requirements:
 
 1. Constitutes a violation of the license
-2. Automatically terminates your rights under the license
-3. May result in legal action
-4. Requires immediate cessation of use until compliance is achieved
+2. Will result in notification of the violation
+3. Provides a 30-day cure period to achieve compliance
+4. Results in automatic license termination if not cured within the cure period
+5. May result in legal action for willful or continued violations
+6. Requires cessation of use until compliance is achieved if termination occurs
+
+The cure period allows good-faith users to correct inadvertent omissions without 
+losing their license rights, while protecting against intentional violations.
 
 ### Questions and Clarifications
 

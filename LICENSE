@@ -34,15 +34,17 @@ the following additional terms apply to this work:
     Original Repository: https://github.com/aresforblue-ai/honestly"
    
    This attribution must be:
-   - Visible in the application's About page or equivalent location
-   - Included in all README files and documentation
+   - Visible in the application's primary About page, settings page, or 
+     similar prominent location where credits/licenses are typically shown
+   - Included in all README files and primary documentation
    - Present in headers or comments of modified source files
-   - Displayed in any web interface footer or credits section
+   - Displayed in web interface footer, credits section, or similar 
+     location where third-party attributions are shown
 
-2. ON-CHAIN PROOF OF USAGE REQUIREMENT
+2. ON-CHAIN PROOF OF USAGE REQUIREMENT (for production deployments)
    
-   Any entity or individual using, modifying, or deploying this software
-   in a production environment or commercial context MUST:
+   Any entity or individual deploying this software in a production 
+   environment or commercial context SHOULD (and is strongly encouraged to):
    
    a) Publish a cryptographic proof of usage on at least one of the
       following blockchain networks:
@@ -61,11 +63,15 @@ the following additional terms apply to this work:
       - An ERC-721 or ERC-1155 token with metadata referencing this work, OR
       - A permanent on-chain message or transaction with OP_RETURN data
    
-   d) A link or transaction ID to the on-chain proof MUST be submitted
-      to this repository through:
+   d) A link or transaction ID to the on-chain proof SHOULD be submitted
+      to this repository through any of these methods:
       - A pull request to the DEPLOYMENTS.md file (if it exists), OR
       - An issue labeled "deployment-proof", OR
-      - Email to the repository maintainer
+      - Through the repository's contact mechanisms
+      
+      Note: While submission is strongly encouraged for transparency and
+      community awareness, the on-chain proof itself serves as the primary
+      record of compliance.
 
 3. NETWORK COPYLEFT
    
@@ -79,11 +85,16 @@ the following additional terms apply to this work:
    This software is provided "as-is" without any warranty. The authors
    and copyright holders are not liable for any damages arising from its use.
 
-5. TERMINATION
+5. TERMINATION AND CURE
    
-   Failure to comply with the attribution or on-chain proof requirements
-   constitutes a violation of this license and automatically terminates
-   your rights under this license.
+   Failure to comply with the attribution requirements constitutes a 
+   violation of this license. Upon notification of violation, you have 
+   30 days to cure the violation. If the violation is not cured within 
+   this period, your rights under this license automatically terminate.
+   
+   For on-chain proof requirements, good faith efforts to comply are 
+   recognized, and technical difficulties or blockchain network issues 
+   provide reasonable grounds for extension of compliance timelines.
 
 ================================================================================
 FULL LICENSE TEXT
