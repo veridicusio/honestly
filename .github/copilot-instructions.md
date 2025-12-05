@@ -35,7 +35,7 @@ cd backend-python && pip install -r requirements.txt
 
 ### Running Services
 ```bash
-make up                     # Start Docker infrastructure (Neo4j, Kafka, PostgreSQL)
+make up                     # Start Docker infrastructure (uses docker-compose-updated.yml if exists, else docker-compose.yml)
 make dev-frontend           # Start React dev server (port 3000)
 make dev-backend-gql        # Start GraphQL server (port 4000)
 make dev-backend-py         # Start Python API (port 8000)
@@ -81,8 +81,6 @@ make down                   # Stop Docker services
 **Example:**
 ```javascript
 // frontend-app/src/components/AppCard.jsx
-import React from 'react';
-
 const AppCard = ({ app }) => {
   const { name, platform, whistlerScore, grade } = app;
   
@@ -274,11 +272,11 @@ async def upload_document(doc: DocumentUpload):
 
 ## 📖 Additional Resources
 
-- [Architecture Documentation](../ARCHITECTURE.md)
-- [Setup Guide](../SETUP.md)
-- [Vault API Documentation](../docs/vault-api.md)
-- [Vault Quick Start](../docs/vault-quickstart.md)
-- [Project Scope](../docs/Scope.md)
+- [Architecture Documentation](/ARCHITECTURE.md)
+- [Setup Guide](/SETUP.md)
+- [Vault API Documentation](/docs/vault-api.md)
+- [Vault Quick Start](/docs/vault-quickstart.md)
+- [Project Scope](/docs/Scope.md)
 
 ## ⚡ Performance Considerations
 
