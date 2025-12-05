@@ -219,7 +219,7 @@ class PathUtils {
   /**
    * Ensure a directory exists, creating it if necessary
    * @param {string} dirPath - The directory path
-   * @returns {boolean} True if the directory was created or already exists
+   * @returns {boolean} Always returns true if successful (throws error otherwise)
    */
   static ensureDir(dirPath) {
     if (!dirPath || typeof dirPath !== 'string') {
