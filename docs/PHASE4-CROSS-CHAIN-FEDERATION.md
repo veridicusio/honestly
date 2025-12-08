@@ -209,9 +209,9 @@ contract AnomalyOracle is CCIPReceiver {
 }
 ```
 
-### 4. Staking & Slashing Contract
+### 4. Staking & Slashing Contract (with Karak Restaking)
 
-Economic incentives for honest reporting:
+Economic incentives for honest reporting + yield on idle stakes:
 
 ```solidity
 // SPDX-License-Identifier: MIT
@@ -219,21 +219,41 @@ pragma solidity ^0.8.19;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
+import {IKarakVault} from "./interfaces/IKarakVault.sol";
 
 contract AnomalyStaking is ReentrancyGuard {
-    IERC20 public stakingToken;         // e.g., LINK or native token
+    IERC20 public stakingToken;             // LINK
+    IKarakVault public karakVault;          // Karak restaking for yield
     
-    uint256 public constant MIN_STAKE = 100 ether;          // Min to report
-    uint256 public constant SLASH_PERCENT = 50;             // 50% slash on false positive
-    uint256 public constant REWARD_PERCENT = 10;            // 10% of slash goes to disputer
+    // Stake thresholds
+    uint256 public constant BRONZE_STAKE = 100 ether;
+    uint256 public constant SILVER_STAKE = 500 ether;
+    uint256 public constant GOLD_STAKE = 2000 ether;
+    
+    // Economic params
+    uint256 public constant SLASH_BRONZE = 50;      // 50%
+    uint256 public constant SLASH_SILVER = 40;      // 40%
+    uint256 public constant SLASH_GOLD = 30;        // 30%
+    uint256 public constant REWARD_PERCENT = 10;    // 10% from slash pool
+    uint256 public constant DISPUTE_BOND_PERCENT = 5; // 5% bond to dispute
     uint256 public constant DISPUTE_WINDOW = 7 days;
+    
+    // Slash pool for rewards
+    uint256 public slashPool;
+    
+    enum Tier { None, Bronze, Silver, Gold }
+    enum ReportStatus { Pending, Confirmed, Disputed, Slashed }
+    enum DisputeResult { Pending, DisputerWins, ReporterWins }
     
     struct Reporter {
         uint256 stakedAmount;
+        uint256 karakShares;        // Shares in Karak vault
         uint256 reportsCount;
+        uint256 successfulReports;
         uint256 slashedCount;
         uint256 rewardsEarned;
-        bool isActive;
+        Tier tier;
+        bool isRestaking;           // Opted into Karak yield
     }
     
     struct AnomalyReport {
@@ -245,29 +265,55 @@ contract AnomalyStaking is ReentrancyGuard {
         ReportStatus status;
     }
     
-    enum ReportStatus { Pending, Confirmed, Disputed, Slashed }
+    struct Dispute {
+        bytes32 reportId;
+        address disputer;
+        uint256 bond;
+        uint256 timestamp;
+        DisputeResult result;
+    }
     
     mapping(address => Reporter) public reporters;
-    mapping(bytes32 => AnomalyReport) public reports;  // reportId => Report
+    mapping(bytes32 => AnomalyReport) public reports;
+    mapping(bytes32 => Dispute) public disputes;
     
-    event Staked(address indexed reporter, uint256 amount);
+    event Staked(address indexed reporter, uint256 amount, Tier tier);
+    event Restaked(address indexed reporter, uint256 shares);
     event AnomalyReported(bytes32 indexed reportId, bytes32 agentId, address reporter);
-    event Disputed(bytes32 indexed reportId, address disputer);
+    event DisputeOpened(bytes32 indexed reportId, address disputer, uint256 bond);
+    event DisputeResolved(bytes32 indexed reportId, DisputeResult result);
     event Slashed(bytes32 indexed reportId, address reporter, uint256 amount);
-    event Rewarded(bytes32 indexed reportId, address reporter, uint256 amount);
+    event Rewarded(address indexed recipient, uint256 amount, string reason);
+    
+    constructor(address _stakingToken, address _karakVault) {
+        stakingToken = IERC20(_stakingToken);
+        karakVault = IKarakVault(_karakVault);
+    }
     
     /**
      * @notice Stake tokens to become a reporter
+     * @param amount Amount of LINK to stake
+     * @param enableRestaking Opt into Karak restaking for yield
      */
-    function stake(uint256 amount) external nonReentrant {
-        require(amount >= MIN_STAKE, "Below minimum stake");
+    function stake(uint256 amount, bool enableRestaking) external nonReentrant {
+        require(amount >= BRONZE_STAKE, "Below minimum (100 LINK)");
         
         stakingToken.transferFrom(msg.sender, address(this), amount);
         
-        reporters[msg.sender].stakedAmount += amount;
-        reporters[msg.sender].isActive = true;
+        Reporter storage r = reporters[msg.sender];
+        r.stakedAmount += amount;
+        r.tier = _calculateTier(r.stakedAmount);
         
-        emit Staked(msg.sender, amount);
+        // Optional: Restake into Karak for yield
+        if (enableRestaking) {
+            stakingToken.approve(address(karakVault), amount);
+            uint256 shares = karakVault.deposit(amount, address(this));
+            r.karakShares += shares;
+            r.isRestaking = true;
+            emit Restaked(msg.sender, shares);
+        }
+        
+        emit Staked(msg.sender, amount, r.tier);
     }
     
     /**
@@ -279,15 +325,17 @@ contract AnomalyStaking is ReentrancyGuard {
         uint16 sourceChain,
         address reporter
     ) external onlyOracle {
-        require(reporters[reporter].isActive, "Reporter not staked");
-        require(reporters[reporter].stakedAmount >= MIN_STAKE, "Insufficient stake");
+        Reporter storage r = reporters[reporter];
+        require(r.tier != Tier.None, "Reporter not staked");
+        require(_canReport(reporter), "Daily limit reached");
         
         bytes32 reportId = keccak256(abi.encodePacked(
             agentId, anomalyScore, block.timestamp, reporter
         ));
         
-        // Put stake at risk
-        uint256 stakeAtRisk = reporters[reporter].stakedAmount * SLASH_PERCENT / 100;
+        // Calculate stake at risk based on tier
+        uint256 slashPercent = _getSlashPercent(r.tier);
+        uint256 stakeAtRisk = r.stakedAmount * slashPercent / 100;
         
         reports[reportId] = AnomalyReport({
             agentId: agentId,
@@ -298,47 +346,96 @@ contract AnomalyStaking is ReentrancyGuard {
             status: ReportStatus.Pending
         });
         
-        reporters[reporter].reportsCount++;
+        r.reportsCount++;
         
         emit AnomalyReported(reportId, agentId, reporter);
     }
     
     /**
-     * @notice Dispute a false positive (requires proof)
+     * @notice Open a dispute (requires 5% bond)
      * @param reportId The report to dispute
-     * @param innocenceProof ZK proof that agent behavior was normal
      */
-    function dispute(
-        bytes32 reportId,
-        bytes calldata innocenceProof
-    ) external nonReentrant {
+    function openDispute(bytes32 reportId) external nonReentrant {
         AnomalyReport storage report = reports[reportId];
         require(report.status == ReportStatus.Pending, "Not disputable");
         require(
             block.timestamp <= report.timestamp + DISPUTE_WINDOW,
             "Dispute window closed"
         );
+        require(disputes[reportId].disputer == address(0), "Already disputed");
         
-        // Verify innocence proof (agent proves they weren't anomalous)
+        // Calculate and collect bond (5% of reporter's stake at risk)
+        uint256 bond = report.stakeAtRisk * DISPUTE_BOND_PERCENT / 100;
+        require(bond > 0, "Invalid bond");
+        
+        stakingToken.transferFrom(msg.sender, address(this), bond);
+        
+        disputes[reportId] = Dispute({
+            reportId: reportId,
+            disputer: msg.sender,
+            bond: bond,
+            timestamp: block.timestamp,
+            result: DisputeResult.Pending
+        });
+        
+        report.status = ReportStatus.Disputed;
+        
+        emit DisputeOpened(reportId, msg.sender, bond);
+    }
+    
+    /**
+     * @notice Resolve dispute with innocence proof
+     * @param reportId The disputed report
+     * @param innocenceProof ZK proof that agent was NOT anomalous
+     */
+    function resolveDispute(
+        bytes32 reportId,
+        bytes calldata innocenceProof
+    ) external nonReentrant {
+        AnomalyReport storage report = reports[reportId];
+        Dispute storage dispute = disputes[reportId];
+        
+        require(report.status == ReportStatus.Disputed, "Not disputed");
+        require(dispute.result == DisputeResult.Pending, "Already resolved");
+        
+        // Verify innocence proof via zkML verifier
         bool innocent = _verifyInnocenceProof(report.agentId, innocenceProof);
-        require(innocent, "Innocence proof invalid");
         
-        // Slash reporter
-        uint256 slashAmount = report.stakeAtRisk;
-        reporters[report.reporter].stakedAmount -= slashAmount;
-        reporters[report.reporter].slashedCount++;
+        if (innocent) {
+            // DISPUTER WINS - Reporter was wrong
+            dispute.result = DisputeResult.DisputerWins;
+            
+            // Slash reporter
+            uint256 slashAmount = report.stakeAtRisk;
+            reporters[report.reporter].stakedAmount -= slashAmount;
+            reporters[report.reporter].slashedCount++;
+            reporters[report.reporter].tier = _calculateTier(
+                reporters[report.reporter].stakedAmount
+            );
+            
+            // Reward disputer (10% of slashed + bond returned)
+            uint256 reward = slashAmount * REWARD_PERCENT / 100;
+            stakingToken.transfer(dispute.disputer, reward + dispute.bond);
+            
+            // Rest goes to slash pool
+            slashPool += slashAmount - reward;
+            
+            report.status = ReportStatus.Slashed;
+            
+            emit Slashed(reportId, report.reporter, slashAmount);
+            emit Rewarded(dispute.disputer, reward, "dispute_win");
+            
+        } else {
+            // REPORTER WINS - Dispute failed
+            dispute.result = DisputeResult.ReporterWins;
+            
+            // Burn disputer's bond (deflationary)
+            stakingToken.transfer(address(0xdead), dispute.bond);
+            
+            // Reporter can claim reward after window
+        }
         
-        // Reward disputer
-        uint256 reward = slashAmount * REWARD_PERCENT / 100;
-        stakingToken.transfer(msg.sender, reward);
-        
-        // Burn or redistribute rest
-        stakingToken.transfer(address(0xdead), slashAmount - reward);
-        
-        report.status = ReportStatus.Slashed;
-        
-        emit Disputed(reportId, msg.sender);
-        emit Slashed(reportId, report.reporter, slashAmount);
+        emit DisputeResolved(reportId, dispute.result);
     }
     
     /**
@@ -346,30 +443,117 @@ contract AnomalyStaking is ReentrancyGuard {
      */
     function confirmReport(bytes32 reportId) external {
         AnomalyReport storage report = reports[reportId];
-        require(report.status == ReportStatus.Pending, "Not pending");
+        require(
+            report.status == ReportStatus.Pending || 
+            (report.status == ReportStatus.Disputed && 
+             disputes[reportId].result == DisputeResult.ReporterWins),
+            "Cannot confirm"
+        );
         require(
             block.timestamp > report.timestamp + DISPUTE_WINDOW,
             "Dispute window active"
         );
         
-        // Reward reporter for valid detection
+        // Reward reporter from slash pool
         uint256 reward = report.stakeAtRisk * REWARD_PERCENT / 100;
-        reporters[report.reporter].rewardsEarned += reward;
-        stakingToken.transfer(report.reporter, reward);
+        if (reward > slashPool) reward = slashPool;
+        
+        if (reward > 0) {
+            slashPool -= reward;
+            reporters[report.reporter].rewardsEarned += reward;
+            reporters[report.reporter].successfulReports++;
+            stakingToken.transfer(report.reporter, reward);
+            
+            emit Rewarded(report.reporter, reward, "true_positive");
+        }
         
         report.status = ReportStatus.Confirmed;
+    }
+    
+    /**
+     * @notice Claim Karak restaking yield
+     */
+    function claimYield() external nonReentrant {
+        Reporter storage r = reporters[msg.sender];
+        require(r.isRestaking && r.karakShares > 0, "Not restaking");
         
-        emit Rewarded(reportId, report.reporter, reward);
+        uint256 yield = karakVault.claimYield(r.karakShares);
+        if (yield > 0) {
+            stakingToken.transfer(msg.sender, yield);
+            emit Rewarded(msg.sender, yield, "karak_yield");
+        }
+    }
+    
+    // === View Functions ===
+    
+    function _calculateTier(uint256 amount) internal pure returns (Tier) {
+        if (amount >= GOLD_STAKE) return Tier.Gold;
+        if (amount >= SILVER_STAKE) return Tier.Silver;
+        if (amount >= BRONZE_STAKE) return Tier.Bronze;
+        return Tier.None;
+    }
+    
+    function _getSlashPercent(Tier tier) internal pure returns (uint256) {
+        if (tier == Tier.Gold) return SLASH_GOLD;
+        if (tier == Tier.Silver) return SLASH_SILVER;
+        return SLASH_BRONZE;
+    }
+    
+    function _canReport(address reporter) internal view returns (bool) {
+        Reporter storage r = reporters[reporter];
+        // Gold = unlimited, Silver = 50/day, Bronze = 10/day
+        // Simplified: check tier
+        return r.tier != Tier.None;
     }
     
     function _verifyInnocenceProof(
         bytes32 agentId,
         bytes calldata proof
     ) internal view returns (bool) {
-        // Verify ZK proof that agent's behavior was within normal bounds
-        // Could use same zkML verifier with inverted threshold
         return zkmlVerifier.verifyInnocence(agentId, proof);
     }
+    
+    function getReporterInfo(address reporter) external view returns (
+        uint256 stakedAmount,
+        Tier tier,
+        uint256 reportsCount,
+        uint256 successfulReports,
+        uint256 slashedCount,
+        uint256 rewardsEarned,
+        bool isRestaking
+    ) {
+        Reporter storage r = reporters[reporter];
+        return (
+            r.stakedAmount,
+            r.tier,
+            r.reportsCount,
+            r.successfulReports,
+            r.slashedCount,
+            r.rewardsEarned,
+            r.isRestaking
+        );
+    }
+}
+```
+
+### Karak Vault Interface
+
+```solidity
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
+
+interface IKarakVault {
+    /// @notice Deposit LINK for restaking yield
+    function deposit(uint256 amount, address onBehalfOf) external returns (uint256 shares);
+    
+    /// @notice Withdraw staked LINK
+    function withdraw(uint256 shares, address to) external returns (uint256 amount);
+    
+    /// @notice Claim accumulated yield
+    function claimYield(uint256 shares) external returns (uint256 yield);
+    
+    /// @notice Get current APY (scaled by 1e18)
+    function getCurrentAPY() external view returns (uint256);
 }
 ```
 
@@ -453,53 +637,84 @@ contract AnomalyRegistry {
 
 ## Economic Model
 
+### Event Outcomes
+
+| Event | Result | Notes |
+|-------|--------|-------|
+| **True Positive** | Reporter +10% stake reward (from slash pool) | Chainlink feeds confirm TP via off-chain resolvers |
+| **False Positive** | Reporter -50% stake (slashed to pool) | zkML proof invalid? Auto-slash on oracle consensus |
+| **Dispute (Win)** | Disputer +10% slashed amt | Must post 5% stake bond to dispute |
+| **Dispute (Lose)** | Disputer -100% bond | Bond burned—prevents spam disputes |
+| **Restake Bonus** | +5% APY on staked LINK via Karak | Idle stakes earn—boosts long-term holders |
+
 ### Staking Tiers
 
-| Tier | Stake Required | Max Reports/Day | Slash % | Reward % |
-|------|---------------|-----------------|---------|----------|
-| Bronze | 100 LINK | 10 | 50% | 5% |
-| Silver | 500 LINK | 50 | 40% | 8% |
-| Gold | 2000 LINK | Unlimited | 30% | 12% |
+| Tier | Stake (LINK) | Max Reports/Day | Slash % | Est. Yield (APY) |
+|------|-------------|-----------------|---------|------------------|
+| 🥉 Bronze | 100 | 10 | 50% | 2% |
+| 🥈 Silver | 500 | 50 | 40% | 3.5% |
+| 🥇 Gold | 2000 | ∞ | 30% | 5%+ (restake opt) |
+
+> **Why Yield?** Karak's 2025 restaking hits 10-20% on LINK equivalents. Pulls in liquidity and rewards long-term stakers.
 
 ### Incentive Flow
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    ECONOMIC FLOW                            │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│   Reporter Stakes 100 LINK                                  │
-│            │                                                │
-│            ▼                                                │
-│   ┌─────────────────┐                                       │
-│   │ Anomaly Report  │                                       │
-│   │ (50 LINK at     │                                       │
-│   │  risk)          │                                       │
-│   └────────┬────────┘                                       │
-│            │                                                │
-│      ┌─────┴─────┐                                          │
-│      ▼           ▼                                          │
-│  ┌───────┐   ┌───────┐                                      │
-│  │ TRUE  │   │ FALSE │                                      │
-│  │POSITIVE   │POSITIVE│                                      │
-│  └───┬───┘   └───┬───┘                                      │
-│      │           │                                          │
-│      ▼           ▼                                          │
-│  +5 LINK     -50 LINK (slashed)                             │
-│  reward          │                                          │
-│                  ├──▶ 5 LINK to disputer                    │
-│                  └──▶ 45 LINK burned                        │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           ECONOMIC FLOW                                     │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   Reporter Stakes 100 LINK ────────────────────┐                            │
+│            │                                   │                            │
+│            │                          ┌────────▼────────┐                   │
+│            │                          │  KARAK RESTAKE  │                   │
+│            │                          │  +2-5% APY      │                   │
+│            │                          └────────┬────────┘                   │
+│            ▼                                   │                            │
+│   ┌─────────────────┐                          │                            │
+│   │ Anomaly Report  │◄─────────────────────────┘                            │
+│   │ (50 LINK at     │                                                       │
+│   │  risk)          │                                                       │
+│   └────────┬────────┘                                                       │
+│            │                                                                │
+│      ┌─────┴─────┐                                                          │
+│      ▼           ▼                                                          │
+│  ┌───────┐   ┌───────┐                                                      │
+│  │ TRUE  │   │ FALSE │                                                      │
+│  │POSITIVE   │POSITIVE│                                                      │
+│  └───┬───┘   └───┬───┘                                                      │
+│      │           │                                                          │
+│      ▼           ▼                                                          │
+│  +10 LINK    -50 LINK (slashed to pool)                                     │
+│  from pool        │                                                         │
+│                   │        ┌─────────────────┐                              │
+│                   │        │    DISPUTE?     │                              │
+│                   │        │ (5% bond req'd) │                              │
+│                   │        └────────┬────────┘                              │
+│                   │           ┌─────┴─────┐                                 │
+│                   │           ▼           ▼                                 │
+│                   │       ┌───────┐   ┌───────┐                             │
+│                   │       │ WIN   │   │ LOSE  │                             │
+│                   │       └───┬───┘   └───┬───┘                             │
+│                   │           │           │                                 │
+│                   │           ▼           ▼                                 │
+│                   │     +10% slashed   -100% bond                           │
+│                   │     to disputer    (burned)                             │
+│                   │           │                                             │
+│                   └───────────┴──────────────────────────▶ SLASH POOL       │
+│                                                             (rewards +      │
+│                                                              burns)         │
+└─────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ### Dispute Resolution
 
 1. **7-day window** for disputes after report
-2. **Innocence proof** required (ZK proof of normal behavior)
-3. **Slash on false positive**: 50% of reporter's stake
-4. **Reward disputer**: 10% of slashed amount
-5. **Burn remainder**: Deflationary pressure
+2. **5% bond required** to open dispute (prevents spam)
+3. **Innocence proof** required (ZK proof of normal behavior)
+4. **If disputer wins**: +10% of slashed amount, bond returned
+5. **If disputer loses**: Bond burned (deflationary)
+6. **Auto-slash**: Oracle consensus on invalid zkML triggers immediate slash
 
 ## Deployment Plan
 

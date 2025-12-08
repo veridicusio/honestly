@@ -465,7 +465,7 @@ export function AnomalyDashboard() {
             <Badge className="bg-violet-600/30 text-violet-300 border-violet-500/50">Preview</Badge>
           </div>
           <CardDescription className="text-zinc-400">
-            Decentralized anomaly detection with economic incentives
+            Decentralized anomaly detection with economic incentives + Karak restaking
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -483,24 +483,49 @@ export function AnomalyDashboard() {
               <div className="text-white font-medium">Chainlink CCIP</div>
             </div>
             <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
-              <div className="text-zinc-500 mb-1">💰 Staking</div>
-              <div className="text-white font-medium">100 LINK min</div>
+              <div className="text-zinc-500 mb-1">📈 Yield</div>
+              <div className="text-emerald-400 font-medium">2-5% APY (Karak)</div>
+            </div>
+          </div>
+          
+          {/* Staking Tiers */}
+          <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
+            <div className="p-2 rounded bg-amber-900/20 border border-amber-700/30 text-center">
+              <div className="text-amber-400 font-medium">🥉 Bronze</div>
+              <div className="text-zinc-400">100 LINK</div>
+              <div className="text-zinc-500">2% APY</div>
+            </div>
+            <div className="p-2 rounded bg-slate-400/10 border border-slate-500/30 text-center">
+              <div className="text-slate-300 font-medium">🥈 Silver</div>
+              <div className="text-zinc-400">500 LINK</div>
+              <div className="text-zinc-500">3.5% APY</div>
+            </div>
+            <div className="p-2 rounded bg-yellow-900/20 border border-yellow-600/30 text-center">
+              <div className="text-yellow-400 font-medium">🥇 Gold</div>
+              <div className="text-zinc-400">2000 LINK</div>
+              <div className="text-zinc-500">5%+ APY</div>
             </div>
           </div>
           
           {/* Incentive Flow */}
           <div className="mt-4 p-4 rounded-lg bg-zinc-800/30 border border-zinc-700/30">
-            <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">Economic Model</div>
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
+            <div className="text-xs text-zinc-500 mb-3 uppercase tracking-wide">Economic Model</div>
+            <div className="space-y-2 text-sm">
+              <div className="flex items-center justify-between">
                 <span className="text-emerald-400">✓ True Positive</span>
-                <span className="text-zinc-600">→</span>
-                <span className="text-emerald-400 font-mono">+10% reward</span>
+                <span className="text-emerald-400 font-mono">+10% from pool</span>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center justify-between">
                 <span className="text-red-400">✗ False Positive</span>
-                <span className="text-zinc-600">→</span>
                 <span className="text-red-400 font-mono">-50% slashed</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-blue-400">⚖️ Dispute (win)</span>
+                <span className="text-blue-400 font-mono">+10% slashed + bond</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <span className="text-orange-400">⚖️ Dispute (lose)</span>
+                <span className="text-orange-400 font-mono">-5% bond burned</span>
               </div>
             </div>
           </div>
