@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useNavigate } from 'react-router-dom';
 import { ApolloClient, InMemoryCache, ApolloProvider, useQuery, gql } from '@apollo/client';
 import { groth16 } from 'snarkjs';
 import { 
   Shield, Search, CheckCircle, AlertTriangle, FileJson, Lock, Activity, 
-  Eye, Server, Terminal, Zap, ArrowRight, ExternalLink, Copy, Check,
-  Sparkles, Globe, TrendingUp, Users, ChevronRight, Menu, X, Github
+  Eye, Server, Zap, ArrowRight, ExternalLink, Copy, Check,
+  Sparkles, Globe, TrendingUp, ChevronRight, Menu, X, Github
 } from 'lucide-react';
 
 // ============================================
@@ -123,7 +123,7 @@ const Navigation = () => {
         <div className="hidden md:flex items-center gap-6">
           <Link to="/" className="text-sm text-slate-400 hover:text-white transition-colors">Dashboard</Link>
           <a href="#features" className="text-sm text-slate-400 hover:text-white transition-colors">Features</a>
-          <a href="https://github.com" target="_blank" rel="noopener" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+          <a href="https://github.com" target="_blank" rel="noopener noreferrer" className="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1">
             <Github size={14} /> GitHub
           </a>
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
@@ -282,7 +282,7 @@ const LandingHero = () => {
         <a 
           href="https://docs.honestly.dev"
           target="_blank"
-          rel="noopener"
+          rel="noopener noreferrer"
           className="btn-ghost flex items-center gap-2 text-lg"
         >
           Documentation
@@ -566,7 +566,7 @@ const AppDetail = () => {
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="text-slate-200 font-medium mb-2">"{claim.statement}"</p>
+                      <p className="text-slate-200 font-medium mb-2">&quot;{claim.statement}&quot;</p>
                       <div className="flex flex-wrap gap-2 text-xs font-mono">
                         <span className="px-2 py-1 rounded bg-slate-800/60 text-slate-400">
                           HASH: {claim.claimHash?.slice(0, 8) || 'N/A'}
