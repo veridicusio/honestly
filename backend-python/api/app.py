@@ -26,6 +26,21 @@ from api.auth import decode_authorization_header
 # Import monitoring router
 from api.monitoring import router as monitoring_router
 
+# Import AI agent routers
+try:
+    from api.ai_agents import router as ai_agents_router
+    AI_AGENTS_AVAILABLE = True
+except ImportError:
+    AI_AGENTS_AVAILABLE = False
+    ai_agents_router = None
+
+try:
+    from api.ml_router import router as ml_router
+    ML_ROUTER_AVAILABLE = True
+except ImportError:
+    ML_ROUTER_AVAILABLE = False
+    ml_router = None
+
 # Import Prometheus metrics
 try:
     from api.prometheus import get_metrics_endpoint
@@ -387,6 +402,14 @@ app.include_router(vault_router)
 
 # Mount monitoring routes
 app.include_router(monitoring_router)
+
+# Mount AI agent routes
+if AI_AGENTS_AVAILABLE and ai_agents_router:
+    app.include_router(ai_agents_router)
+
+# Mount ML anomaly detection routes
+if ML_ROUTER_AVAILABLE and ml_router:
+    app.include_router(ml_router)
 
 # Prometheus metrics endpoint
 if PROMETHEUS_AVAILABLE:
