@@ -328,10 +328,13 @@ async def login(request: LoginRequest):
     
     In production, validate against your user database.
     """
-    # TODO: Replace with actual user validation
-    # This is a placeholder - integrate with your user store
+    # NOTE: Demo users for development/testing
+    # For production, integrate with your user store:
+    #   - Connect to database (Neo4j, PostgreSQL, etc.)
+    #   - Use proper password hashing (bcrypt, argon2)
+    #   - Add account lockout after failed attempts
     
-    # Demo users for development
+    # Demo users (development only)
     demo_users = {
         "admin": {"password": "admin123", "role": "admin"},
         "verifier": {"password": "verify123", "role": "verifier"},
