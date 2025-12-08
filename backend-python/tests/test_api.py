@@ -34,9 +34,9 @@ def mock_graph():
 @pytest.fixture(scope="module")
 def mock_vkeys():
     """Mock verification key functions."""
-    with patch("api.app.vkeys_ready", return_value=True), \
-         patch("api.app.get_vkey_hash", return_value="test_hash_abc123"), \
-         patch("api.app.load_vkey_hashes"):
+    with patch("api.app.verification_keys_ready", return_value=True), \
+         patch("api.app.get_verification_key_hash", return_value="test_hash_abc123"), \
+         patch("api.app.load_verification_key_hashes"):
         yield
 
 

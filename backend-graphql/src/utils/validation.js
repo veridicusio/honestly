@@ -32,19 +32,19 @@ export function validateEnum(fieldName, value, allowedValues) {
 }
 
 export function validateNumber(fieldName, value, options = {}) {
-  const num = Number(value);
+  const numericValue = Number(value);
   
-  if (isNaN(num)) {
+  if (isNaN(numericValue)) {
     throw new ValidationError(`${fieldName} must be a number`);
   }
   
-  if (options.min !== undefined && num < options.min) {
+  if (options.min !== undefined && numericValue < options.min) {
     throw new ValidationError(`${fieldName} must be at least ${options.min}`);
   }
   
-  if (options.max !== undefined && num > options.max) {
+  if (options.max !== undefined && numericValue > options.max) {
     throw new ValidationError(`${fieldName} must be at most ${options.max}`);
   }
   
-  return num;
+  return numericValue;
 }
