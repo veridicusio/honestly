@@ -199,7 +199,7 @@ class ReputationAnalyzer:
                     {
                         "score": record["score"],
                         "threshold": record["threshold"],
-                        "timestamp": record["timestamp"].iso_format() if record["timestamp"] else None,
+                        "timestamp": record["timestamp"].isoformat() if record["timestamp"] else None,
                         "nullifier": record["nullifier"],
                     }
                     for record in result

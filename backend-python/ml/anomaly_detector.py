@@ -213,7 +213,7 @@ class AnomalyDetector:
         if proof_type == "agent_reputation":
             public_signals = proof_data.get("publicSignals", [])
             if len(public_signals) > 1:
-                threshold_requested = int(public_signals[1]) if public_signals[1].isdigit() else 0
+                threshold_requested = int(public_signals[1]) if str(public_signals[1]).isdigit() else 0
             
             # Check reputation history
             rep_history = [
