@@ -641,21 +641,78 @@ contract AnomalyRegistry {
 
 | Event | Result | Notes |
 |-------|--------|-------|
-| **True Positive** | Reporter +10% stake reward (from slash pool) | Chainlink feeds confirm TP via off-chain resolvers |
-| **False Positive** | Reporter -50% stake (slashed to pool) | zkML proof invalid? Auto-slash on oracle consensus |
-| **Dispute (Win)** | Disputer +10% slashed amt | Must post 5% stake bond to dispute |
-| **Dispute (Lose)** | Disputer -100% bond | Bond burned—prevents spam disputes |
-| **Restake Bonus** | +5% APY on staked LINK via Karak | Idle stakes earn—boosts long-term holders |
+| **True Positive** | +10% from slash pool | Chainlink off-chain resolvers confirm—feeds into registry for immutable cred |
+| **False Positive** | -50% stake slashed | Oracle auto-triggers; funds pool for TPs |
+| **Dispute (Win)** | +10% slashed + bond back | Disputer submits zkML innocence proof—resolves in <60s via CCIP |
+| **Dispute (Lose)** | -100% bond burned | Deflationary hammer—LINK supply shrinks, value up |
+| **Restake Bonus** | +2-5% APY via Karak | Idle stakes compound; claimable quarterly to avoid gas wars |
 
-### Staking Tiers
+### Staking Tiers (with Risk/Reward Analysis)
 
-| Tier | Stake (LINK) | Max Reports/Day | Slash % | Est. Yield (APY) |
-|------|-------------|-----------------|---------|------------------|
-| 🥉 Bronze | 100 | 10 | 50% | 2% |
-| 🥈 Silver | 500 | 50 | 40% | 3.5% |
-| 🥇 Gold | 2000 | ∞ | 30% | 5%+ (restake opt) |
+| Tier | Stake (LINK) | Slash % | APY | Risk/Reward Ratio | Perk |
+|------|-------------|---------|-----|-------------------|------|
+| 🥉 Bronze | 100 | 50% | 2% | **25:1** (High Risk) | Entry-level; capped reports to learn ropes |
+| 🥈 Silver | 500 | 40% | 3.5% | **11:1** (Balanced) | Unlimited disputes—mid-tier power |
+| 🥇 Gold | 2000 | 30% | 5%+ | **6:1** (Low Risk) | Infinite reports + priority oracle slots |
 
-> **Why Yield?** Karak's 2025 restaking hits 10-20% on LINK equivalents. Pulls in liquidity and rewards long-term stakers.
+> **Risk/Reward Ratio** = Slash % / APY — lower is better for stakers.  
+> Based on 2025 Karak benchmarks (10-20% on stables, tuned down for LINK volatility).
+
+### Why This Model Works
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        ECONOMIC FLYWHEEL                                    │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│   ┌──────────────┐                                                          │
+│   │ STAKERS      │                                                          │
+│   │ stake LINK   │─────────────────────┐                                    │
+│   └──────┬───────┘                     │                                    │
+│          │                             ▼                                    │
+│          │                    ┌────────────────┐                            │
+│          │                    │  KARAK VAULT   │                            │
+│          │                    │  +2-5% APY     │                            │
+│          │                    └────────┬───────┘                            │
+│          │                             │                                    │
+│          ▼                             │ (quarterly claim)                  │
+│   ┌──────────────┐                     │                                    │
+│   │ REPORTERS    │◄────────────────────┘                                    │
+│   │ detect       │                                                          │
+│   │ anomalies    │                                                          │
+│   └──────┬───────┘                                                          │
+│          │                                                                  │
+│    ┌─────┴─────┐                                                            │
+│    ▼           ▼                                                            │
+│  ┌────┐     ┌────┐                                                          │
+│  │ TP │     │ FP │                                                          │
+│  └──┬─┘     └──┬─┘                                                          │
+│     │          │                                                            │
+│     ▼          ▼                                                            │
+│  +10%       -50%                                                            │
+│  reward     slashed ────────────────────────┐                               │
+│     │                                       ▼                               │
+│     │                              ┌────────────────┐                       │
+│     │                              │  SLASH POOL    │                       │
+│     │                              │  (funds TPs)   │                       │
+│     │                              └────────┬───────┘                       │
+│     │                                       │                               │
+│     └───────────────────────────────────────┘                               │
+│                                                                             │
+│   DISPUTERS ──▶ 5% bond ──▶ WIN: +10% + bond | LOSE: bond burned 🔥        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Key Insights
+
+| Metric | Value | Why It Matters |
+|--------|-------|----------------|
+| **Dispute Bond** | 5% stake | Prevents spam; Wormhole Guardian model |
+| **Resolution Time** | <60s | CCIP fast-finality for UX |
+| **Claim Period** | Quarterly | Batches gas, rewards patience |
+| **Burn on Lose** | 100% bond | Deflationary pressure on LINK |
+| **Gold Priority** | Oracle slots | Incentivizes upgrade path |
 
 ### Incentive Flow
 

@@ -488,23 +488,68 @@ export function AnomalyDashboard() {
             </div>
           </div>
           
-          {/* Staking Tiers */}
+          {/* Staking Tiers with Risk/Reward */}
           <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-            <div className="p-2 rounded bg-amber-900/20 border border-amber-700/30 text-center">
-              <div className="text-amber-400 font-medium">🥉 Bronze</div>
-              <div className="text-zinc-400">100 LINK</div>
-              <div className="text-zinc-500">2% APY</div>
+            <div className="p-3 rounded bg-amber-900/20 border border-amber-700/30">
+              <div className="text-amber-400 font-medium text-center">🥉 Bronze</div>
+              <div className="text-zinc-400 text-center">100 LINK</div>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">APY</span>
+                  <span className="text-emerald-400">2%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Slash</span>
+                  <span className="text-red-400">50%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">R/R</span>
+                  <span className="text-orange-400 font-mono">25:1</span>
+                </div>
+              </div>
+              <div className="text-zinc-600 text-center mt-2 text-[10px]">Entry-level</div>
             </div>
-            <div className="p-2 rounded bg-slate-400/10 border border-slate-500/30 text-center">
-              <div className="text-slate-300 font-medium">🥈 Silver</div>
-              <div className="text-zinc-400">500 LINK</div>
-              <div className="text-zinc-500">3.5% APY</div>
+            <div className="p-3 rounded bg-slate-400/10 border border-slate-500/30">
+              <div className="text-slate-300 font-medium text-center">🥈 Silver</div>
+              <div className="text-zinc-400 text-center">500 LINK</div>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">APY</span>
+                  <span className="text-emerald-400">3.5%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Slash</span>
+                  <span className="text-red-400">40%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">R/R</span>
+                  <span className="text-yellow-400 font-mono">11:1</span>
+                </div>
+              </div>
+              <div className="text-zinc-600 text-center mt-2 text-[10px]">∞ disputes</div>
             </div>
-            <div className="p-2 rounded bg-yellow-900/20 border border-yellow-600/30 text-center">
-              <div className="text-yellow-400 font-medium">🥇 Gold</div>
-              <div className="text-zinc-400">2000 LINK</div>
-              <div className="text-zinc-500">5%+ APY</div>
+            <div className="p-3 rounded bg-yellow-900/20 border border-yellow-600/30">
+              <div className="text-yellow-400 font-medium text-center">🥇 Gold</div>
+              <div className="text-zinc-400 text-center">2000 LINK</div>
+              <div className="mt-2 space-y-1">
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">APY</span>
+                  <span className="text-emerald-400">5%+</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">Slash</span>
+                  <span className="text-red-400">30%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-zinc-500">R/R</span>
+                  <span className="text-emerald-400 font-mono">6:1</span>
+                </div>
+              </div>
+              <div className="text-zinc-600 text-center mt-2 text-[10px]">Priority slots</div>
             </div>
+          </div>
+          <div className="text-zinc-600 text-[10px] text-center mt-2">
+            R/R = Slash% / APY • Lower is better • Quarterly yield claims
           </div>
           
           {/* Incentive Flow */}
