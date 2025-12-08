@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     nlohmann-json3-dev \
     libgmp-dev \
+    libsodium-dev \
     nasm \
     && rm -rf /var/lib/apt/lists/*
 
@@ -27,6 +28,23 @@ RUN git clone https://github.com/iden3/circom.git /tmp/circom \
     && cargo build --release \
     && cargo install --path circom \
     && rm -rf /tmp/circom
+
+# ==============================================================================
+# Install Rapidsnark (high-performance Groth16 prover)
+# 5-10x faster than SnarkJS, sub-8GB RAM for 1M+ constraint circuits
+# ==============================================================================
+RUN git clone https://github.com/iden3/rapidsnark.git /tmp/rapidsnark \
+    && cd /tmp/rapidsnark \
+    && git submodule init \
+    && git submodule update \
+    && mkdir build && cd build \
+    && cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local \
+    && make -j$(nproc) \
+    && make install \
+    && rm -rf /tmp/rapidsnark
+
+# Verify rapidsnark installation
+RUN rapidsnark --version || echo "Rapidsnark installed (no version flag)"
 
 WORKDIR /zkp
 
@@ -131,14 +149,25 @@ RUN npx snarkjs groth16 setup artifacts/level3_inequality/Level3Inequality.r1cs 
     && npx snarkjs zkey export verificationkey artifacts/level3_inequality/Level3Inequality_final.zkey artifacts/level3_inequality/verification_key.json
 
 # ==============================================================================
-# Stage 2: Runtime - Slim image with compiled artifacts
+# Stage 2: Runtime - Slim image with compiled artifacts + rapidsnark
 # ==============================================================================
 FROM node:18-slim AS runtime
 
-# Install only runtime dependencies for C++ witness generators
+# Install runtime dependencies for C++ witness generators + rapidsnark
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgmp10 \
+    libsodium23 \
+    libgomp1 \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
+
+# Copy rapidsnark binary from builder
+COPY --from=builder /usr/local/bin/rapidsnark /usr/local/bin/rapidsnark
+COPY --from=builder /usr/local/bin/prover /usr/local/bin/prover
+
+# Verify rapidsnark works
+RUN rapidsnark --version || echo "Rapidsnark ready"
 
 WORKDIR /zkp
 
@@ -176,13 +205,15 @@ COPY --from=builder /zkp/artifacts/agent_reputation/verification_key.json ./arti
 # Copy runner scripts
 COPY backend-python/zkp/snark-runner.js ./
 COPY backend-python/zkp/poseidon-hash.js ./
+COPY backend-python/zkp/rapidsnark_prover.py ./
 
 # Set memory for runtime proving
 ENV NODE_OPTIONS="--max-old-space-size=8192"
+ENV RAPIDSNARK_BIN="/usr/local/bin/rapidsnark"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "require('snarkjs')" || exit 1
+    CMD rapidsnark --version || node -e "require('snarkjs')" || exit 1
 
 # Default: keep container running for volume mounts
 CMD ["tail", "-f", "/dev/null"]

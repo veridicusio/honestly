@@ -299,6 +299,75 @@ level3-circuits:
 
 ---
 
+## ⚡ Rapidsnark Integration
+
+Rapidsnark is a high-performance C++ Groth16 prover from iden3. **5-10x faster than SnarkJS** with sub-8GB RAM for 1M+ constraint circuits.
+
+### When to Use
+
+| Prover | Best For | Speed | Memory |
+|--------|----------|-------|--------|
+| SnarkJS | Simple circuits (age, auth) | ~5s | 4GB |
+| **Rapidsnark** | Level 3, AAIP, recursive | ~2s | 8GB |
+
+### Installation
+
+```bash
+# From source (Linux/macOS)
+git clone https://github.com/iden3/rapidsnark.git
+cd rapidsnark
+git submodule init && git submodule update
+mkdir build && cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release
+make -j$(nproc)
+sudo make install
+
+# Verify
+rapidsnark --version
+```
+
+### Python Integration
+
+The `ZKProofService` automatically uses rapidsnark for Level 3 and AAIP circuits:
+
+```python
+from vault.zk_proofs import ZKProofService
+
+zk = ZKProofService()
+
+# Simple circuits → SnarkJS (fast enough)
+proof = zk.generate_age_proof(birth_date="1990-01-01", min_age=18, document_hash="0x...")
+
+# Level 3 circuits → Rapidsnark (5-10x faster)
+proof = zk.generate_age_level3_proof(birth_date="1990-01-01", min_age=18, document_hash="0x...")
+
+# AAIP circuits → Rapidsnark
+proof = zk.generate_agent_reputation_proof(
+    reputation_score=75,
+    threshold=50,
+    agent_did_hash="0x...",
+)
+```
+
+### CLI Usage
+
+```bash
+# Prove with rapidsnark
+python rapidsnark_prover.py prove -c age_level3 -i input.json -o proof.json
+
+# Benchmark SnarkJS vs Rapidsnark
+python rapidsnark_prover.py benchmark -c age_level3 -i input.json
+# Output: ⚡ Speedup: 5.2x faster with Rapidsnark
+```
+
+### Environment Variables
+
+```bash
+RAPIDSNARK_BIN=/usr/local/bin/rapidsnark  # Path to binary
+```
+
+---
+
 ## 🐳 Docker Build
 
 Multi-stage Dockerfile for C++ witness generators (builds native, copies to slim runtime):

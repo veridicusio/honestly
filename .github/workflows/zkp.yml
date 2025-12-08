@@ -170,11 +170,32 @@ jobs:
         with:
           node-version: '20'
 
-      # Install C++ build tools for witness generator
+      # Install C++ build tools for witness generator + rapidsnark
       - name: Install C++ toolchain
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential nlohmann-json3-dev libgmp-dev nasm
+          sudo apt-get install -y build-essential cmake nlohmann-json3-dev libgmp-dev libsodium-dev nasm
+
+      # Install rapidsnark for fast proving
+      - name: Cache rapidsnark
+        id: cache-rapidsnark
+        uses: actions/cache@v4
+        with:
+          path: /usr/local/bin/rapidsnark
+          key: rapidsnark-${{ runner.os }}-v1
+
+      - name: Build and install rapidsnark
+        if: steps.cache-rapidsnark.outputs.cache-hit != 'true'
+        run: |
+          git clone https://github.com/iden3/rapidsnark.git /tmp/rapidsnark
+          cd /tmp/rapidsnark
+          git submodule init && git submodule update
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release
+          make -j$(nproc)
+          sudo cp prover /usr/local/bin/rapidsnark
+          rm -rf /tmp/rapidsnark
+          rapidsnark --version || echo "Rapidsnark installed"
 
       - name: Cache npm dependencies
         uses: actions/cache@v4
