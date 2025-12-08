@@ -549,7 +549,10 @@ export function AnomalyDashboard() {
             </div>
           </div>
           <div className="text-zinc-600 text-[10px] text-center mt-2">
-            R/R = Slash% / APY • Lower is better • Quarterly yield claims
+            R/R = Slash% ÷ APY = "pain per point of gain" • Lower is better • Quarterly claims
+          </div>
+          <div className="text-zinc-700 text-[9px] text-center mt-1">
+            Gold has 4x better risk-adjusted returns than Bronze (6:1 vs 25:1)
           </div>
           
           {/* Incentive Flow */}

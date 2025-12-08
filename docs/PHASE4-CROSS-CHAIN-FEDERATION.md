@@ -649,14 +649,47 @@ contract AnomalyRegistry {
 
 ### Staking Tiers (with Risk/Reward Analysis)
 
-| Tier | Stake (LINK) | Slash % | APY | Risk/Reward Ratio | Perk |
-|------|-------------|---------|-----|-------------------|------|
-| 🥉 Bronze | 100 | 50% | 2% | **25:1** (High Risk) | Entry-level; capped reports to learn ropes |
-| 🥈 Silver | 500 | 40% | 3.5% | **11:1** (Balanced) | Unlimited disputes—mid-tier power |
-| 🥇 Gold | 2000 | 30% | 5%+ | **6:1** (Low Risk) | Infinite reports + priority oracle slots |
+| Tier | Stake (LINK) | Slash % | APY | R/R Ratio | Insight |
+|------|-------------|---------|-----|-----------|---------|
+| 🥉 Bronze | 100 | 50% | 2% | **25:1** `(50÷2)` | High risk entry—perfect for testing waters |
+| 🥈 Silver | 500 | 40% | 3.5% | **11:1** `(40÷3.5≈11.4)` | Balanced sweet spot—∞ disputes reward active reporters |
+| 🥇 Gold | 2000 | 30% | 5%+ | **6:1** `(30÷5)` | Pro tier jackpot—priority slots + 4x better returns than Bronze |
 
-> **Risk/Reward Ratio** = Slash % / APY — lower is better for stakers.  
-> Based on 2025 Karak benchmarks (10-20% on stables, tuned down for LINK volatility).
+### R/R Calculation Explainer
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     RISK/REWARD RATIO FORMULA                               │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│                         Slash %                                             │
+│         R/R Ratio = ─────────────                                           │
+│                          APY                                                │
+│                                                                             │
+│   ───────────────────────────────────────────────────────────────────────   │
+│                                                                             │
+│   BRONZE:  50% ÷ 2%   = 25:1   →  "25 units pain per 1% gain"              │
+│   SILVER:  40% ÷ 3.5% = 11:1   →  "11 units pain per 1% gain"              │
+│   GOLD:    30% ÷ 5%   =  6:1   →  "6 units pain per 1% gain"               │
+│                                                                             │
+│   ───────────────────────────────────────────────────────────────────────   │
+│                                                                             │
+│   INTERPRETATION:                                                           │
+│   • Lower ratio = Better risk-adjusted returns                              │
+│   • Gold has 4x better hedge than Bronze (6:1 vs 25:1)                     │
+│   • "Pain per point of gain" — how much slash exposure per yield unit      │
+│                                                                             │
+│   ───────────────────────────────────────────────────────────────────────   │
+│                                                                             │
+│   DYNAMIC TUNING:                                                           │
+│   • APY adjusts via Karak feeds for market-fit                             │
+│   • Bull market: Lower APY (demand high) → R/R increases                   │
+│   • Bear market: Higher APY (attract liquidity) → R/R decreases            │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+> **Why This Matters**: Professional reporters gravitate to Gold because the math compounds—lower slash risk + higher yield = sustainable income stream. Bronze is "tuition" tier where new reporters learn without catastrophic loss.
 
 ### Why This Model Works
 
