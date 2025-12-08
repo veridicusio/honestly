@@ -3,8 +3,8 @@
 <div align="center">
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
+![Build](https://github.com/aresforblue-ai/honestly/workflows/CI/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-85%25-yellow.svg)
 
 **A production-ready, blockchain-verified identity and credential verification system with zero-knowledge proofs, AI integration, and enterprise-grade security.**
@@ -29,7 +29,12 @@ Honestly is a comprehensive **privacy-preserving identity platform** that enable
 
 ## ✨ What's New
 
-### 🤖 AI Agent Identity Protocol (AAIP) — NEW
+### 📦 Recent Releases
+
+**v1.0.0** — AI Agent Identity Protocol, Enterprise Security, World-Class UI  
+[View Changelog →](https://github.com/aresforblue-ai/honestly/releases/tag/v1.0.0)
+
+### 🤖 AI Agent Identity Protocol (AAIP)
 - **Verifiable AI Identities** — First-of-its-kind protocol for AI agent authentication
 - **Real Groth16 ZK Proofs** — Reputation thresholds proven without revealing scores
 - **Nullifier Tracking** — Replay attack prevention with Redis persistence
@@ -203,6 +208,12 @@ cd frontend-app && npm run dev
 | Neo4j | http://localhost:7474 | Graph Browser |
 | Grafana | http://localhost:3001 | Dashboards |
 
+### 🛠️ Troubleshooting
+
+- **Neo4j connection issues?** Nuke volumes: `docker-compose down -v && docker-compose up`
+- **Port conflicts?** Check for existing services: `lsof -i :8000` (Mac/Linux) or `netstat -ano | findstr :8000` (Windows)
+- **ZK compilation fails?** Increase memory: `export NODE_OPTIONS="--max-old-space-size=8192"`
+
 ---
 
 ## 🔐 Zero-Knowledge Proofs
@@ -342,7 +353,9 @@ See [SECURITY.md](SECURITY.md) for details.
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE)
+**MIT License** — Permission is hereby granted, free of charge, to any person obtaining a copy of this software to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies.
+
+See [LICENSE](LICENSE) for full terms.
 
 ---
 
