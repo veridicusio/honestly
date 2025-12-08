@@ -1,6 +1,30 @@
 # ML Module for Honestly
 
-Phase 3 ML integration: Anomaly detection and pattern analysis for ZK proofs and AAIP.
+Phase 3 ML integration: Anomaly detection, zkML (Zero-Knowledge Machine Learning), and pattern analysis for ZK proofs and AAIP.
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        ML Pipeline                                   │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  Neo4j ──→ neo4j_loader ──→ autoencoder (train)                     │
+│                                    │                                 │
+│  agent_features ──→ autoencoder ──→ anomaly_score                   │
+│                          │              │                            │
+│                          ▼              ▼                            │
+│                   latent_vector    zkml_prover                      │
+│                                         │                            │
+│                                         ▼                            │
+│                              ZK Proof: "score > 0.8"                │
+│                                         │                            │
+│                                         ▼                            │
+│                              Hyperledger Fabric                      │
+│                              (on-chain anchor)                       │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
 
 ## Features
 
@@ -191,14 +215,114 @@ FOR (r:ReputationProof) ON (r.timestamp)
 | Model training (10K samples) | ~2s | One-time |
 | Reputation trend query | <20ms | Neo4j indexed |
 
+## LSTM Autoencoder (`autoencoder.py`)
+
+Deep learning anomaly detection for agent activity sequences:
+
+```python
+from ml.autoencoder import get_autoencoder, create_training_dataset
+from ml.neo4j_loader import Neo4jDataLoader
+
+# Load training data from Neo4j
+loader = Neo4jDataLoader(neo4j_driver)
+train_data = loader.load_agent_sequences(days=30, seq_len=10)
+
+# Train autoencoder
+autoencoder = get_autoencoder()
+history = autoencoder.fit(train_data, epochs=50)
+
+# Detect anomaly
+result = autoencoder.detect_anomaly(agent_features)
+# result.anomaly_score: 0.0-1.0
+# result.reconstruction_error: raw MSE
+# result.is_anomalous: True if score > threshold
+
+# Export for zkML
+autoencoder.export_onnx(Path("model.onnx"))
+```
+
+### Input Features (per timestep)
+
+| Feature | Description | Range |
+|---------|-------------|-------|
+| reputation_score | Current rep | 0-100 |
+| claim_count | Claims in period | 0+ |
+| proof_count | Proofs generated | 0+ |
+| interaction_count | Agent interactions | 0+ |
+| hour_of_day | Time feature | 0-1 |
+| day_of_week | Day feature | 0-1 |
+| response_time_avg | Avg response (ms) | 0+ |
+| error_rate | Error rate | 0-1 |
+
+## zkML Prover (`zkml_prover.py`)
+
+Zero-knowledge proofs of ML inference (DeepProve integration):
+
+```python
+from ml.zkml_prover import get_zkml_prover
+
+prover = get_zkml_prover()
+
+# Generate ZK proof that anomaly_score > threshold
+proof = prover.prove_anomaly_threshold(
+    agent_features=features,
+    threshold=0.8,
+)
+
+# proof.public_inputs = ["800", "1"]  # threshold*1000, is_above
+# proof.proof = { pi_a, pi_b, pi_c }  # Groth16 proof
+
+# Verify proof
+is_valid = prover.verify_proof(proof)
+```
+
+### Why zkML?
+
+- **Privacy**: Prove "agent is anomalous" without revealing features or model
+- **Anti-gaming**: Model weights hidden, can't reverse-engineer
+- **On-chain**: Anchor proof to Hyperledger for immutable audit
+- **Performance**: <1s inference + <500ms verify (DeepProve)
+
+## Neo4j Data Loader (`neo4j_loader.py`)
+
+Load training data from the agent/claim graph:
+
+```python
+from ml.neo4j_loader import create_training_dataset
+
+# Create labeled dataset
+data, labels = create_training_dataset(
+    neo4j_driver=driver,
+    normal_samples=500,
+    anomaly_samples=50,
+    seq_len=10,
+)
+
+# data: List of sequences
+# labels: 0=normal, 1=anomaly
+```
+
+### Cypher Query (internal)
+
+```cypher
+MATCH (a:Agent)
+OPTIONAL MATCH (a)-[:HAS_CLAIM]->(c:Claim)
+OPTIONAL MATCH (a)-[:HAS_PROOF]->(p:Proof)
+OPTIONAL MATCH (a)-[:INTERACTS_WITH]->(other:Agent)
+RETURN a.id, a.reputation, count(c), count(p), count(other)
+```
+
 ## Dependencies
 
 **Required:**
 - numpy
 - py2neo (for Neo4j)
 
-**Optional (for ML model):**
-- scikit-learn>=1.3.0
+**Optional (for ML models):**
+- scikit-learn>=1.3.0 (isolation forest)
+- torch>=2.0.0 (LSTM autoencoder)
+- deepprove (zkML, install separately)
 
-Without scikit-learn, the detector falls back to heuristic-only mode.
+Without PyTorch, the autoencoder falls back to statistical methods.
+Without DeepProve, zkML generates mock proofs for development.
 
