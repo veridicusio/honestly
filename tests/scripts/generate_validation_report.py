@@ -186,7 +186,7 @@ def generate_visualizations(report: Dict, output_dir: Path) -> Dict[str, str]:
                 times = list(percentiles.values())
                 colors = ['green' if t < 200 else 'red' for t in times]
                 
-                bars = ax.bar(names, times, color=colors, alpha=0.7, edgecolor='black')
+                ax.bar(names, times, color=colors, alpha=0.7, edgecolor='black')
                 ax.axhline(200, color='red', linestyle='--', linewidth=2, label='Target (200ms)')
                 
                 for i, (name, time) in enumerate(percentiles.items()):
@@ -316,6 +316,6 @@ Generated: {report['generated_at']}
 
 if __name__ == "__main__":
     report = generate_report()
-    print(f"\nReport saved to tests/results/validation-report.json")
-    print(f"Markdown report saved to tests/results/validation-report.md")
+    print("\nReport saved to tests/results/validation-report.json")
+    print("Markdown report saved to tests/results/validation-report.md")
 

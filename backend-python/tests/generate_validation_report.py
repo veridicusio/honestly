@@ -3,19 +3,15 @@
 Generate comprehensive validation report with visualizations.
 Creates markdown report with response time histograms and metrics.
 """
-import os
-import sys
 import json
-import glob
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
 from datetime import datetime
 
 try:
     import matplotlib
     matplotlib.use('Agg')  # Non-interactive backend
     import matplotlib.pyplot as plt
-    import pandas as pd
     import numpy as np
     HAS_VISUALIZATION = True
 except ImportError:
@@ -84,7 +80,7 @@ class ValidationReportGenerator:
                         # Try to extract numeric values
                         if isinstance(value, (int, float)):
                             response_times.append(value)
-                    except:
+                    except (ValueError, TypeError, KeyError):
                         pass
             
             if not response_times:
@@ -258,19 +254,19 @@ class ValidationReportGenerator:
             
             # Add visualizations
             if histogram_path:
-                report_lines.append(f"### Response Time Distribution")
+                report_lines.append("### Response Time Distribution")
                 report_lines.append("")
                 report_lines.append(f"![Response Time Histogram]({histogram_path})")
                 report_lines.append("")
             
             if percentile_path:
-                report_lines.append(f"### Percentile Breakdown")
+                report_lines.append("### Percentile Breakdown")
                 report_lines.append("")
                 report_lines.append(f"![Percentile Trend]({percentile_path})")
                 report_lines.append("")
             
             if error_rate_path:
-                report_lines.append(f"### Error Rate")
+                report_lines.append("### Error Rate")
                 report_lines.append("")
                 report_lines.append(f"![Error Rate]({error_rate_path})")
                 report_lines.append("")

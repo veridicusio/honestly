@@ -23,8 +23,7 @@ Usage:
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 logger = logging.getLogger(__name__)
 
@@ -227,8 +226,6 @@ class Neo4jDataLoader:
         - Sybil attacks
         - Proof farming
         """
-        import random
-        
         anomalies = []
         
         for i in range(n_samples):
