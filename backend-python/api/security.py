@@ -232,8 +232,8 @@ def hash_sensitive_data(data: str, salt: Optional[str] = None) -> str:
     if salt is None:
         salt = os.urandom(16).hex()
     
-    h = hmac.new(salt.encode(), data.encode(), hashlib.sha256)
-    return f"{salt}:{h.hexdigest()}"
+    hmac_hash = hmac.new(salt.encode(), data.encode(), hashlib.sha256)
+    return f"{salt}:{hmac_hash.hexdigest()}"
 
 
 def verify_ai_agent_signature(payload: str, signature: str, secret: str) -> bool:

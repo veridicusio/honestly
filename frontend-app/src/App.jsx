@@ -604,38 +604,38 @@ const VerifyShare = () => {
   useEffect(() => {
     const run = async () => {
       try {
-        setState(s => ({ ...s, status: 'Fetching bundle...' }));
-        const res = await fetch(`${API_BASE}/vault/share/${token}/bundle`);
-        if (!res.ok) throw new Error(`Bundle fetch failed (${res.status})`);
-        const bundle = await res.json();
+        setState(prevState => ({ ...prevState, status: 'Fetching bundle...' }));
+        const bundleResponse = await fetch(`${API_BASE}/vault/share/${token}/bundle`);
+        if (!bundleResponse.ok) throw new Error(`Bundle fetch failed (${bundleResponse.status})`);
+        const bundle = await bundleResponse.json();
 
-        const raw = bundle.proof_data || bundle.proof || bundle.bundle;
-        if (!raw) {
+        const rawProofData = bundle.proof_data || bundle.proof || bundle.bundle;
+        if (!rawProofData) {
           setState({ status: 'No proof found', error: 'Bundle missing proof_data', bundle, verified: null, circuit: bundle.proof_type });
           return;
         }
 
-        const proofBundle = typeof raw === 'string' ? JSON.parse(raw) : raw;
+        const proofBundle = typeof rawProofData === 'string' ? JSON.parse(rawProofData) : rawProofData;
         const circuit = bundle.proof_type || proofBundle.circuit || 'age';
-        const vkeyUrl = bundle.verification?.vk_url || `${API_BASE}/zkp/artifacts/${circuit}/verification_key.json`;
+        const verificationKeyUrl = bundle.verification?.vk_url || `${API_BASE}/zkp/artifacts/${circuit}/verification_key.json`;
 
-        setState(s => ({ ...s, status: 'Fetching verification key...' }));
-        let vkey = vkCache.get(vkeyUrl);
-        if (!vkey) {
-          const vkRes = await fetch(vkeyUrl, { cache: 'force-cache' });
-          if (!vkRes.ok) throw new Error(`Verification key fetch failed (${vkRes.status})`);
-          vkey = await vkRes.json();
-          vkCache.set(vkeyUrl, vkey);
+        setState(prevState => ({ ...prevState, status: 'Fetching verification key...' }));
+        let verificationKey = vkCache.get(verificationKeyUrl);
+        if (!verificationKey) {
+          const vkeyResponse = await fetch(verificationKeyUrl, { cache: 'force-cache' });
+          if (!vkeyResponse.ok) throw new Error(`Verification key fetch failed (${vkeyResponse.status})`);
+          verificationKey = await vkeyResponse.json();
+          vkCache.set(verificationKeyUrl, verificationKey);
         }
 
-        setState(s => ({ ...s, status: 'Verifying proof...' }));
+        setState(prevState => ({ ...prevState, status: 'Verifying proof...' }));
         const publicSignals = proofBundle.publicSignals || proofBundle.namedSignals;
         if (!publicSignals || !proofBundle.proof) throw new Error('Proof bundle missing proof or publicSignals');
 
-        const ok = await groth16.verify(vkey, publicSignals, proofBundle.proof);
-        setState({ status: ok ? 'Proof verified!' : 'Verification failed', error: null, bundle, verified: ok, circuit });
+        const isValid = await groth16.verify(verificationKey, publicSignals, proofBundle.proof);
+        setState({ status: isValid ? 'Proof verified!' : 'Verification failed', error: null, bundle, verified: isValid, circuit });
       } catch (err) {
-        setState(s => ({ ...s, status: 'Error', error: err.message, verified: false }));
+        setState(prevState => ({ ...prevState, status: 'Error', error: err.message, verified: false }));
       }
     };
     run();
