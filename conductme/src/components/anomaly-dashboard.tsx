@@ -456,9 +456,60 @@ export function AnomalyDashboard() {
         </CardContent>
       </Card>
       
+      {/* Phase 4 Preview Card */}
+      <Card className="bg-gradient-to-br from-zinc-900 via-violet-950/20 to-zinc-900 border-violet-800/30">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <span className="text-lg">🌐</span>
+            <CardTitle className="text-white">Phase 4: Cross-Chain Federation</CardTitle>
+            <Badge className="bg-violet-600/30 text-violet-300 border-violet-500/50">Preview</Badge>
+          </div>
+          <CardDescription className="text-zinc-400">
+            Decentralized anomaly detection with economic incentives
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+              <div className="text-zinc-500 mb-1">🔗 Chains</div>
+              <div className="text-white font-medium">ETH • SOL • POLY • ARB</div>
+            </div>
+            <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+              <div className="text-zinc-500 mb-1">🌀 Bridge</div>
+              <div className="text-white font-medium">Wormhole VAA</div>
+            </div>
+            <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+              <div className="text-zinc-500 mb-1">📊 Oracle</div>
+              <div className="text-white font-medium">Chainlink CCIP</div>
+            </div>
+            <div className="p-3 rounded-lg bg-zinc-800/50 border border-zinc-700/50">
+              <div className="text-zinc-500 mb-1">💰 Staking</div>
+              <div className="text-white font-medium">100 LINK min</div>
+            </div>
+          </div>
+          
+          {/* Incentive Flow */}
+          <div className="mt-4 p-4 rounded-lg bg-zinc-800/30 border border-zinc-700/30">
+            <div className="text-xs text-zinc-500 mb-2 uppercase tracking-wide">Economic Model</div>
+            <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-emerald-400">✓ True Positive</span>
+                <span className="text-zinc-600">→</span>
+                <span className="text-emerald-400 font-mono">+10% reward</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-red-400">✗ False Positive</span>
+                <span className="text-zinc-600">→</span>
+                <span className="text-red-400 font-mono">-50% slashed</span>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Footer */}
       <div className="text-center text-zinc-600 text-sm">
-        Honestly AAIP • ML Anomaly Detection • zkML Verified
+        Honestly AAIP • ML Anomaly Detection • zkML Verified • Cross-Chain Ready
       </div>
     </div>
   );
