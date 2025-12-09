@@ -1,0 +1,23 @@
+{
+  "name": "honestly-blockchain-contracts",
+  "version": "1.0.0",
+  "description": "Honestly blockchain contracts for L2 anchoring and Phase 4 cross-chain federation",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy:vault": "hardhat run scripts/deploy.js --network",
+    "deploy:phase4": "hardhat run scripts/deploy-phase4.js --network",
+    "deploy:veritas": "hardhat run scripts/deploy-veritas.js --network",
+    "verify": "hardhat verify"
+  },
+  "dependencies": {
+    "@chainlink/contracts-ccip": "^1.0.0",
+    "@openzeppelin/contracts": "^5.0.0"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0",
+    "dotenv": "^16.3.1"
+  }
+}
+
