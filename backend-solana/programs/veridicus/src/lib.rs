@@ -253,9 +253,11 @@ pub mod VERIDICUS {
             _ => 1,
         };
         
-        let total_burn = (base_burn + qubit_burn)
+        let total_burn = base_burn
+            .checked_add(qubit_burn)
+            .ok_or(VERIDICUSError::ArithmeticOverflow)?
             .checked_mul(complexity_multiplier as u64)
-            .unwrap_or(base_burn); // Fallback to base if overflow
+            .ok_or(VERIDICUSError::ArithmeticOverflow)?;
         
         // Burn tokens
         let cpi_accounts = Burn {

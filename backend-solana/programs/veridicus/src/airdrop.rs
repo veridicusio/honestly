@@ -18,13 +18,17 @@ pub fn claim_airdrop(
         VERIDICUSError::InvalidProof
     );
     
-    // Check if already claimed (using separate PDA per claim)
-    // This prevents unbounded growth - each claim has its own account
-    // With init_if_needed, if account exists and claimed=true, reject
-    // If account is new (claimed=false by default), allow claim
-    if ctx.accounts.claim_record.claimed {
-        return Err(VERIDICUSError::AlreadyClaimed.into());
-    }
+    // Check if already claimed using bitmap
+    // Convert leaf hash to claim index (first 4 bytes as u32)
+    let claim_index = u32::from_le_bytes([leaf[0], leaf[1], leaf[2], leaf[3]]) % AirdropState::MAX_CLAIMS;
+    let byte_index = (claim_index / 8) as usize;
+    let bit_index = (claim_index % 8) as u8;
+    
+    // Check if already claimed
+    require!(
+        (airdrop.claimed_bitmap[byte_index] & (1 << bit_index)) == 0,
+        VERIDICUSError::AlreadyClaimed
+    );
     
     // Calculate immediate unlock (50% at launch)
     let immediate = amount / 2;
@@ -53,10 +57,9 @@ pub fn claim_airdrop(
     vesting.vesting_period = 6 * 30 * 24 * 60 * 60; // 6 months in seconds
     vesting.start_timestamp = Clock::get()?.unix_timestamp;
     
-    // Mark as claimed (using separate PDA)
-    ctx.accounts.claim_record.claimed = true;
-    ctx.accounts.claim_record.leaf = leaf;
-    ctx.accounts.claim_record.claimed_at = Clock::get()?.unix_timestamp;
+    // Mark as claimed in bitmap
+    airdrop.claimed_bitmap[byte_index] |= 1 << bit_index;
+    airdrop.total_claims = airdrop.total_claims.checked_add(1).unwrap();
     
     emit!(AirdropClaimed {
         user: ctx.accounts.user.key(),
@@ -150,21 +153,9 @@ fn verify_merkle_proof(proof: &[[u8; 32]], leaf: &[u8; 32], root: &[u8; 32]) -> 
 }
 
 #[derive(Accounts)]
-#[instruction(leaf: [u8; 32])]
 pub struct ClaimAirdrop<'info> {
     #[account(mut, seeds = [b"airdrop"], bump)]
     pub airdrop: Account<'info, AirdropState>,
-    
-    /// Separate PDA per claim - prevents unbounded growth
-    /// Each claim gets its own account, so we never hit account size limits
-    #[account(
-        init_if_needed,
-        payer = user,
-        space = 8 + ClaimRecord::LEN,
-        seeds = [b"claim", leaf.as_ref()],
-        bump
-    )]
-    pub claim_record: Account<'info, ClaimRecord>,
     
     #[account(
         init_if_needed,
@@ -219,25 +210,16 @@ pub struct UnlockVested<'info> {
 #[account]
 pub struct AirdropState {
     pub merkle_root: [u8; 32],
-    // Removed: pub claimed: Vec<[u8; 32]> - This was unbounded and would break after ~312K claims
-    // Solution: Use separate ClaimRecord PDA per claim (see ClaimRecord struct below)
+    pub claimed_bitmap: [u8; 15625], // 125K claims max (1M bits / 8 = 15,625 bytes)
+    pub total_claims: u32, // Track total claims for monitoring
 }
 
 impl AirdropState {
-    pub const LEN: usize = 8 + 32; // discriminator + merkle_root
-}
-
-/// Separate account per claim - prevents unbounded growth
-/// Each claim is tracked in its own PDA, so we never hit Solana's 10MB account limit
-#[account]
-pub struct ClaimRecord {
-    pub claimed: bool,
-    pub leaf: [u8; 32], // Merkle leaf hash
-    pub claimed_at: i64, // Timestamp when claimed
-}
-
-impl ClaimRecord {
-    pub const LEN: usize = 1 + 32 + 8; // claimed bool + leaf + timestamp
+    // discriminator (8) + merkle_root (32) + claimed_bitmap (15625) + total_claims (4)
+    pub const LEN: usize = 8 + 32 + 15625 + 4;
+    
+    // Maximum number of claims supported
+    pub const MAX_CLAIMS: u32 = 125_000;
 }
 
 #[account]

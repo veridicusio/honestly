@@ -96,5 +96,9 @@ pub enum VERIDICUSError {
     InvalidNewAuthority,
     #[msg("Invalid price feed or price too old")]
     InvalidPriceFeed,
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
+    #[msg("Already voted on this proposal")]
+    AlreadyVoted,
 }
 

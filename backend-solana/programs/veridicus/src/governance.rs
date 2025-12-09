@@ -48,8 +48,23 @@ pub fn vote(
         VERIDICUSError::ProposalNotActive
     );
     
+    let vote_record = &mut ctx.accounts.vote_record;
+    
+    // Check if already voted
+    require!(
+        !vote_record.voted,
+        VERIDICUSError::AlreadyVoted
+    );
+    
     // Calculate voting power (quadratic)
     let voting_power = calculate_voting_power(staking.amount);
+    
+    // Record vote
+    vote_record.voter = ctx.accounts.voter.key();
+    vote_record.proposal = ctx.accounts.proposal.key();
+    vote_record.choice = choice;
+    vote_record.voting_power = voting_power;
+    vote_record.voted = true;
     
     if choice {
         proposal.votes_for = proposal.votes_for.checked_add(voting_power).unwrap();
@@ -154,8 +169,19 @@ pub struct Vote<'info> {
     #[account(seeds = [b"staking", voter.key().as_ref()], bump)]
     pub staking: Account<'info, Staking>,
     
-    /// CHECK: Just for lookup
-    pub voter: AccountInfo<'info>,
+    #[account(
+        init_if_needed,
+        payer = voter,
+        space = 8 + VoteRecord::LEN,
+        seeds = [b"vote_record", proposal.key().as_ref(), voter.key().as_ref()],
+        bump
+    )]
+    pub vote_record: Account<'info, VoteRecord>,
+    
+    #[account(mut)]
+    pub voter: Signer<'info>,
+    
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
@@ -186,6 +212,19 @@ pub enum ProposalStatus {
 
 impl Proposal {
     pub const LEN: usize = 32 + 1 + 4 + 200 + 8 + 8 + 8 + 1; // author + type + desc_len + desc + votes + created + status
+}
+
+#[account]
+pub struct VoteRecord {
+    pub voter: Pubkey,
+    pub proposal: Pubkey,
+    pub choice: bool,
+    pub voting_power: u64,
+    pub voted: bool,
+}
+
+impl VoteRecord {
+    pub const LEN: usize = 32 + 32 + 1 + 8 + 1; // voter + proposal + choice + power + voted
 }
 
 // Removed proposal_seed() - now using proposal_id parameter for PDA derivation
