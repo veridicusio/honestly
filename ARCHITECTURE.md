@@ -87,8 +87,10 @@ This document describes the complete architecture of the Honestly Truth Engine p
 ┌─────────────────────────────────────────────────────────────┐
 │                   BLOCKCHAIN LAYER                          │
 │  ┌────────────────────────────────────────────────────┐    │
-│  │           Hyperledger Fabric Network               │    │
-│  │  - Attestation Anchoring                           │    │
+│  │           Base / Arbitrum L2                       │    │
+│  │  - VaultAnchor.sol Smart Contract                  │    │
+│  │  - Attestation Anchoring (~$0.001/anchor)          │    │
+│  │  - Batched Merkle Root Publishing                  │    │
 │  │  - Immutable Audit Trail                           │    │
 │  └────────────────────────────────────────────────────┘    │
 └─────────────────────────────────────────────────────────────┘
@@ -596,10 +598,20 @@ AAIP is a first-of-its-kind protocol for verifiable AI agent identities.
 ### DID Format
 
 ```
-did:honestly:agent:{agent_id}
+did:honestly:agent:{config_fingerprint_prefix}:{agent_id}
 ```
 
-Example: `did:honestly:agent:claude-3-opus-anthropic-abc123`
+Example: `did:honestly:agent:a1b2c3d4e5f67890:agent_abc123def456`
+
+**CRITICAL**: The DID includes a config fingerprint prefix because:
+- Agent identity = Model + Prompt + Configuration
+- If ANY factor changes, it's a DIFFERENT agent
+- `claude-3-opus with "Be helpful"` ≠ `claude-3-opus with "Be evil"`
+
+The config fingerprint is computed from:
+- `model_hash` (specific model weights)
+- `system_prompt_hash` (exact instructions)
+- `capabilities` and `constraints`
 
 ### Usage Example
 

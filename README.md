@@ -24,7 +24,7 @@ Honestly is a comprehensive **privacy-preserving identity platform** that enable
 | 🔐 **Personal Proof Vault** | AES-256-GCM encrypted document storage with zero-knowledge proofs |
 | ✅ **App Verification** | Trust scoring and verification engine for applications |
 | 🤖 **AI Integration** | Structured APIs for LLM and autonomous agent consumption |
-| ⛓️ **Blockchain Anchoring** | Immutable attestations via Hyperledger Fabric |
+| ⛓️ **Blockchain Anchoring** | Immutable attestations via Base/Arbitrum L2 (~$0.001/doc) |
 | 🎭 **Selective Disclosure** | ZK-SNARK proofs for privacy-preserving verification |
 
 ## ✨ What's New

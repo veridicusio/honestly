@@ -22,10 +22,19 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       <CommandInput placeholder="Type a command or search for an AI..." />
       <CommandList>
         <CommandEmpty>No results found.</CommandEmpty>
-        <CommandGroup heading="Suggestions">
+        <CommandGroup heading="Swarm Actions">
+          <CommandItem onSelect={() => {
+            // Trigger summon dialog
+            const event = new CustomEvent('open-summon-dialog');
+            window.dispatchEvent(event);
+            onOpenChange(false);
+          }}>
+            <span className="mr-2">✨</span>
+            <span>Summon Agent Swarm</span>
+          </CommandItem>
           <CommandItem>
             <span className="mr-2">🎯</span>
-            <span>Find an AI for &quot;writing secure code&quot;</span>
+            <span>Find agents for task</span>
           </CommandItem>
           <CommandItem>
             <span className="mr-2">🔗</span>

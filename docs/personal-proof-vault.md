@@ -5,7 +5,7 @@ This document outlines the MVP that turns the starter Truth Engine into a user�
 ### Pillars
 1. **Vault API & Storage** – Encrypted payloads stay in the user’s custody; the backend stores only hashes, metadata, and relationships so verifiers can audit lineage.
 2. **Selective Disclosure Proofs** – Deterministic proof templates (“Document Authenticity”, “Accredited Investor”, etc.) are generated from stored entries. They return human‑readable statements plus a zk‑friendly hash commitment.
-3. **Blockchain Attestation Layer** – Every proof can be anchored to a ledger. The MVP ships with a local append‑only ledger file and an abstraction to swap in Polygon/Base/Fabric anchors later.
+3. **Blockchain Attestation Layer** – Every proof can be anchored to Base/Arbitrum L2. The MVP ships with a local append‑only ledger file and an abstraction for L2 anchoring.
 
 ### Data Flow
 ```
@@ -58,7 +58,7 @@ See `api/schema.graphql` for exact field definitions.
 5. Query `vaultTimeline(ownerId: "user-123")` to show a live feed of signed events.
 
 ### Extending to Production
-- Swap ledger implementation with Polygon/Base or Hyperledger Fabric using the same `record_attestation` hook.
+- Use Base/Arbitrum L2 anchoring via `backend-python/blockchain/l2/` client. See `backend-python/blockchain/README.md` for setup.
 - Replace placeholder zk proof payloads with real circuits (Circom/Groth16) and store proof artifacts alongside hashes.
 - Connect secure storage (e.g., HSM, AWS KMS, Lit Protocol) for encrypting `secureReference` pointers.
 - Add streaming webhooks so downstream apps receive proof/attestation events in real time.

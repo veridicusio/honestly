@@ -429,6 +429,13 @@ if ML_ROUTER_AVAILABLE and ml_router:
 if WS_ROUTER_AVAILABLE and ws_router:
     app.include_router(ws_router)
 
+# Mount AAIP Swarm routes
+try:
+    from api.swarm_routes import router as swarm_router
+    app.include_router(swarm_router)
+except ImportError:
+    pass  # Swarm router optional
+
 # Prometheus metrics endpoint
 if PROMETHEUS_AVAILABLE:
     @app.get("/metrics")

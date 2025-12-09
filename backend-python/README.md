@@ -29,7 +29,7 @@ Production-ready Python backend for the Honestly Truth Engine, providing secure 
 
 - **Kafka** event streaming for data ingestion
 - **FAISS** vector search for semantic similarity
-- **Hyperledger Fabric** blockchain integration for attestations
+- **Base/Arbitrum L2** blockchain anchoring for attestations (~$0.001/doc)
 
 ## 📋 Quick Start
 

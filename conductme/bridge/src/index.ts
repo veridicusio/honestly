@@ -3,23 +3,46 @@
  * 
  * Connects Honestly's ZK proofs to Semaphore identity for human-gated AI orchestration.
  * 
- * Flow:
+ * PRIVACY-PRESERVING FLOW (v2):
  * 1. Human proves age/authenticity via Honestly's Groth16 circuits
- * 2. Proof commitment is used to derive a Semaphore identity
- * 3. Identity is added to the ConductMe group of verified humans
- * 4. Every AI action requires a Semaphore proof (zero-knowledge, unlinkable)
- * 5. Actions are logged with proof verification for audit
+ * 2. User generates Semaphore identity CLIENT-SIDE (in browser)
+ * 3. User creates binding commitment that ties Honestly proof to identity
+ * 4. Server receives only: commitment + binding + proof (never the salt!)
+ * 5. Every AI action requires a Semaphore proof (zero-knowledge, unlinkable)
+ * 6. Actions are logged with proof verification for audit
  * 
  * @module @conductme/trust-bridge
  */
 
-// Identity management
+// Client-side identity (RECOMMENDED - privacy preserving)
+export {
+  ClientIdentity,
+  RegistrationRequest,
+  generateClientIdentity,
+  createBindingCommitment,
+  prepareRegistrationRequest,
+  loadIdentityFromStorage,
+  clearIdentityFromStorage,
+  getOrCreateIdentity,
+  exportIdentityForBackup,
+  importIdentityFromBackup,
+} from './client-identity.js';
+
+// Server-side registration (privacy preserving)
+export {
+  PrivacyPreservingRegistrar,
+  HonestlyNullifierRegistry,
+  RegistrationResult,
+  getDefaultRegistrar,
+} from './server-registration.js';
+
+// Legacy identity management (some functions deprecated)
 export {
   ConductMeIdentity,
   SignalProof,
   createIdentity,
   recoverIdentity,
-  deriveFromHonestlyProof,
+  deriveFromHonestlyProof, // @deprecated - use client-side generation
   ConductMeGroup,
   NullifierRegistry,
 } from './identity.js';
