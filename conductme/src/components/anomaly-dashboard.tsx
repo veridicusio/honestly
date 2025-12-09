@@ -53,9 +53,31 @@ export function AnomalyDashboard() {
     warning: 0,
   });
   const [isSimulating, setIsSimulating] = useState(false);
+  const [marketMode, setMarketMode] = useState<"normal" | "bull" | "bear">("normal");
   
   const wsRef = useRef<WebSocket | null>(null);
   const simulateIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Market mode APY multipliers
+  const marketMultipliers = {
+    normal: 1,
+    bull: 0.5,    // APY halved in bull (demand > supply)
+    bear: 1.5,    // APY 1.5x in bear (attract liquidity)
+  };
+
+  // Calculate dynamic R/R based on market mode
+  const calculateRR = (slashPercent: number, baseAPY: number) => {
+    const effectiveAPY = baseAPY * marketMultipliers[marketMode];
+    const rr = slashPercent / effectiveAPY;
+    return { rr: rr.toFixed(1), apy: effectiveAPY.toFixed(2) };
+  };
+
+  // Tier data
+  const tiers = [
+    { name: "Bronze", emoji: "🥉", stake: 100, slash: 50, baseAPY: 2, bg: "bg-amber-900/20", border: "border-amber-700/30", text: "text-amber-400" },
+    { name: "Silver", emoji: "🥈", stake: 500, slash: 40, baseAPY: 3.5, bg: "bg-slate-400/10", border: "border-slate-500/30", text: "text-slate-300" },
+    { name: "Gold", emoji: "🥇", stake: 2000, slash: 30, baseAPY: 5, bg: "bg-yellow-900/20", border: "border-yellow-600/30", text: "text-yellow-400" },
+  ];
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pingIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -488,71 +510,95 @@ export function AnomalyDashboard() {
             </div>
           </div>
           
-          {/* Staking Tiers with Risk/Reward */}
-          <div className="mt-4 grid grid-cols-3 gap-2 text-xs">
-            <div className="p-3 rounded bg-amber-900/20 border border-amber-700/30">
-              <div className="text-amber-400 font-medium text-center">🥉 Bronze</div>
-              <div className="text-zinc-400 text-center">100 LINK</div>
-              <div className="mt-2 space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">APY</span>
-                  <span className="text-emerald-400">2%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Slash</span>
-                  <span className="text-red-400">50%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">R/R</span>
-                  <span className="text-orange-400 font-mono">25:1</span>
-                </div>
-              </div>
-              <div className="text-zinc-600 text-center mt-2 text-[10px]">Entry-level</div>
-            </div>
-            <div className="p-3 rounded bg-slate-400/10 border border-slate-500/30">
-              <div className="text-slate-300 font-medium text-center">🥈 Silver</div>
-              <div className="text-zinc-400 text-center">500 LINK</div>
-              <div className="mt-2 space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">APY</span>
-                  <span className="text-emerald-400">3.5%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Slash</span>
-                  <span className="text-red-400">40%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">R/R</span>
-                  <span className="text-yellow-400 font-mono">11:1</span>
-                </div>
-              </div>
-              <div className="text-zinc-600 text-center mt-2 text-[10px]">∞ disputes</div>
-            </div>
-            <div className="p-3 rounded bg-yellow-900/20 border border-yellow-600/30">
-              <div className="text-yellow-400 font-medium text-center">🥇 Gold</div>
-              <div className="text-zinc-400 text-center">2000 LINK</div>
-              <div className="mt-2 space-y-1">
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">APY</span>
-                  <span className="text-emerald-400">5%+</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Slash</span>
-                  <span className="text-red-400">30%</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">R/R</span>
-                  <span className="text-emerald-400 font-mono">6:1</span>
-                </div>
-              </div>
-              <div className="text-zinc-600 text-center mt-2 text-[10px]">Priority slots</div>
-            </div>
+          {/* Market Mode Toggle */}
+          <div className="mt-4 flex items-center justify-center gap-2">
+            <span className="text-zinc-500 text-xs">Market Mode:</span>
+            {(["bear", "normal", "bull"] as const).map((mode) => (
+              <Button
+                key={mode}
+                variant={marketMode === mode ? "default" : "outline"}
+                size="sm"
+                onClick={() => setMarketMode(mode)}
+                className={`text-xs h-7 ${
+                  marketMode === mode
+                    ? mode === "bear" 
+                      ? "bg-blue-600 hover:bg-blue-700" 
+                      : mode === "bull"
+                        ? "bg-green-600 hover:bg-green-700"
+                        : "bg-zinc-600 hover:bg-zinc-700"
+                    : "border-zinc-700 text-zinc-400"
+                }`}
+              >
+                {mode === "bear" ? "🐻 Bear" : mode === "bull" ? "🐂 Bull" : "⚖️ Normal"}
+              </Button>
+            ))}
           </div>
+          
+          {/* Market Mode Description */}
+          <div className={`text-center text-[10px] mt-2 px-4 py-1.5 rounded ${
+            marketMode === "bear" 
+              ? "bg-blue-900/20 text-blue-400" 
+              : marketMode === "bull"
+                ? "bg-green-900/20 text-green-400"
+                : "bg-zinc-800/50 text-zinc-500"
+          }`}>
+            {marketMode === "bear" && "APY ×1.5 via Karak incentives → R/R ↓33% → Liquidity magnet 🐋"}
+            {marketMode === "bull" && "APY ×0.5 (demand > supply) → R/R ×2 → Filters casuals"}
+            {marketMode === "normal" && "Baseline rates • R/R = Slash% ÷ APY"}
+          </div>
+
+          {/* Staking Tiers with Dynamic R/R */}
+          <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
+            {tiers.map((tier) => {
+              const { rr, apy } = calculateRR(tier.slash, tier.baseAPY);
+              const rrNum = parseFloat(rr);
+              const rrColor = rrNum <= 8 ? "text-emerald-400" : rrNum <= 15 ? "text-yellow-400" : "text-orange-400";
+              
+              return (
+                <div key={tier.name} className={`p-3 rounded ${tier.bg} border ${tier.border} transition-all duration-300`}>
+                  <div className={`${tier.text} font-medium text-center`}>{tier.emoji} {tier.name}</div>
+                  <div className="text-zinc-400 text-center">{tier.stake} LINK</div>
+                  <div className="mt-2 space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">APY</span>
+                      <span className={`font-mono transition-all duration-300 ${
+                        marketMode === "bear" ? "text-emerald-400" : 
+                        marketMode === "bull" ? "text-red-400" : "text-emerald-400"
+                      }`}>
+                        {apy}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">Slash</span>
+                      <span className="text-red-400">{tier.slash}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-zinc-500">R/R</span>
+                      <span className={`font-mono font-bold transition-all duration-300 ${rrColor}`}>
+                        {rr}:1
+                      </span>
+                    </div>
+                  </div>
+                  <div className="text-zinc-600 text-center mt-2 text-[10px]">
+                    {tier.name === "Bronze" && "Tuition tier"}
+                    {tier.name === "Silver" && "∞ disputes"}
+                    {tier.name === "Gold" && (marketMode === "bear" ? "🐋 Whale magnet" : "Priority slots")}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
           <div className="text-zinc-600 text-[10px] text-center mt-2">
-            R/R = Slash% ÷ APY = "pain per point of gain" • Lower is better • Quarterly claims
+            R/R = Slash% ÷ APY = "pain per point of gain" • Lower is better
           </div>
-          <div className="text-zinc-700 text-[9px] text-center mt-1">
-            Gold has 4x better risk-adjusted returns than Bronze (6:1 vs 25:1)
+          <div className={`text-[9px] text-center mt-1 transition-all duration-300 ${
+            marketMode === "bear" ? "text-blue-400" : 
+            marketMode === "bull" ? "text-green-400" : "text-zinc-700"
+          }`}>
+            {marketMode === "bear" && `Gold R/R drops to ${calculateRR(30, 5).rr}:1 — best hedge in DeFi!`}
+            {marketMode === "bull" && `Gold R/R rises to ${calculateRR(30, 5).rr}:1 — premium pricing`}
+            {marketMode === "normal" && "Gold has 4x better risk-adjusted returns than Bronze (6:1 vs 25:1)"}
           </div>
           
           {/* Incentive Flow */}

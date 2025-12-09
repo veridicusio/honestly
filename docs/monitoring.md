@@ -1,5 +1,4 @@
 # Monitoring Guide
-# Last updated: 2025-12-06
 
 Complete guide to monitoring, health checks, and observability in Honestly.
 
@@ -9,6 +8,21 @@ Honestly provides lightweight probes and Prometheus metrics:
 - Liveness: `GET /health/live`
 - Readiness: `GET /health/ready` (vkeys + Neo4j)
 - Metrics: `GET /metrics` (Prometheus format, if enabled)
+
+## 🚀 Quick Setup
+
+```bash
+# Start monitoring stack (Prometheus + Grafana)
+docker-compose -f docker-compose.monitoring.yml up -d
+
+# Access Grafana: http://localhost:3000 (admin/admin)
+# Access Prometheus: http://localhost:9090
+```
+
+**Configuration:**
+- Prometheus: `docker/prometheus.yml` (scrapes `/metrics` every 5s)
+- Grafana: Pre-configured dashboard at `docker/grafana/dashboards/honestly-dashboard.json`
+- Enable metrics: Set `ENABLE_PROMETHEUS=true` in environment
 
 ## 🏥 Health Checks
 

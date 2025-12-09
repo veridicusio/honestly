@@ -64,13 +64,35 @@ export function recoverIdentity(trapdoor: string, nullifier: string): ConductMeI
 }
 
 /**
- * Derive identity from an age/authenticity proof
- * This links the ZK-verified human to a Semaphore identity
+ * @deprecated PRIVACY VULNERABILITY - DO NOT USE
+ * 
+ * This function is deprecated because it allows the server to link
+ * Honestly proofs to Semaphore identities if the salt is sent to the server.
+ * 
+ * Use client-side identity generation instead:
+ * 
+ * ```typescript
+ * // Client-side (browser)
+ * import { generateClientIdentity, prepareRegistrationRequest } from './client-identity';
+ * 
+ * const identity = generateClientIdentity();
+ * const request = prepareRegistrationRequest(identity, honestlyProof, nullifier, proof);
+ * 
+ * // Send only the request to server (no salt!)
+ * await fetch('/api/register', { body: JSON.stringify(request) });
+ * ```
+ * 
+ * @see ./client-identity.ts for the secure implementation
  */
 export function deriveFromHonestlyProof(
   proofCommitment: string,
   salt: string
 ): ConductMeIdentity {
+  console.warn(
+    '[SECURITY WARNING] deriveFromHonestlyProof is deprecated due to privacy concerns. ' +
+    'Use client-side identity generation instead. See client-identity.ts'
+  );
+  
   // Derive identity deterministically from the Honestly proof
   const seed = ethers.keccak256(
     ethers.AbiCoder.defaultAbiCoder().encode(

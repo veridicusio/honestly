@@ -100,6 +100,13 @@ class AgentIdentity:
     
     This is the core identity document for an AI agent,
     containing cryptographic proofs of its properties.
+    
+    CRITICAL: Agent identity is a function of (Model + Prompt + Configuration).
+    If ANY of these change, the identity changes or is invalidated.
+    
+    The config_fingerprint uniquely identifies this specific agent configuration.
+    Changing the system prompt from "Be helpful" to "Be evil" creates a 
+    DIFFERENT identity - this is by design for accountability.
     """
     # Core identity
     agent_id: str
@@ -113,6 +120,14 @@ class AgentIdentity:
     # Model information (without revealing proprietary details)
     model_family: str  # e.g., "transformer", "diffusion"
     model_hash: str    # Hash of model weights (proves specific model)
+    
+    # CRITICAL: System prompt hash - changing this changes identity
+    # "Honesty" for an AI = Model + Prompt + Configuration
+    system_prompt_hash: str = ""  # SHA-256 of system prompt
+    
+    # Full configuration fingerprint (deterministic identity hash)
+    # This is what makes the DID unique and verifiable
+    config_fingerprint: str = ""  # H(model + prompt + config)
     
     # Capabilities and constraints
     capabilities: List[str]
@@ -142,13 +157,55 @@ class AgentIdentity:
             self.created_at = datetime.utcnow().isoformat()
         if not self.expires_at:
             self.expires_at = (datetime.utcnow() + timedelta(days=365)).isoformat()
+        if not self.config_fingerprint:
+            self.config_fingerprint = self._compute_config_fingerprint()
         if not self.identity_commitment:
             self.identity_commitment = self._compute_commitment()
     
+    def _compute_config_fingerprint(self) -> str:
+        """
+        Compute deterministic configuration fingerprint.
+        
+        This is the cryptographic identity of this specific agent configuration.
+        If ANYTHING changes (model, prompt, config), this fingerprint changes.
+        """
+        config_data = {
+            "model_hash": self.model_hash,
+            "system_prompt_hash": self.system_prompt_hash,
+            "model_family": self.model_family,
+            "agent_version": self.agent_version,
+            "capabilities": sorted(self.capabilities),
+            "constraints": sorted(self.constraints),
+        }
+        canonical = json.dumps(config_data, sort_keys=True, separators=(',', ':'))
+        return hashlib.sha256(canonical.encode()).hexdigest()
+    
     def _compute_commitment(self) -> str:
         """Compute identity commitment for ZK proofs."""
-        data = f"{self.agent_id}:{self.operator_id}:{self.model_hash}:{self.created_at}"
+        # Now includes config_fingerprint for full accountability
+        data = f"{self.agent_id}:{self.operator_id}:{self.config_fingerprint}:{self.created_at}"
         return hashlib.sha256(data.encode()).hexdigest()
+    
+    def verify_config_integrity(self) -> bool:
+        """
+        Verify that the stored config_fingerprint matches current config.
+        
+        Returns False if configuration has been tampered with.
+        """
+        expected = self._compute_config_fingerprint()
+        return self.config_fingerprint == expected
+    
+    def get_did(self) -> str:
+        """
+        Get the Decentralized Identifier for this agent.
+        
+        Format: did:honestly:agent:{fingerprint_prefix}:{agent_id}
+        
+        The fingerprint prefix ensures that agents with different configs
+        have different DIDs, even if they have the same agent_id.
+        """
+        fp_prefix = self.config_fingerprint[:16] if self.config_fingerprint else "0" * 16
+        return f"did:honestly:agent:{fp_prefix}:{self.agent_id}"
     
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -261,9 +318,14 @@ class AIAgentRegistry:
         public_key: str,
         is_human_backed: bool = True,
         metadata: Optional[Dict] = None,
+        system_prompt_hash: str = "",
     ) -> AgentIdentity:
         """
         Register a new AI agent in the registry.
+        
+        CRITICAL: The agent's identity is determined by (Model + Prompt + Config).
+        The system_prompt_hash is essential - changing the prompt creates a
+        fundamentally different agent.
         
         Returns an AgentIdentity that can be used for verification.
         """
@@ -277,6 +339,7 @@ class AIAgentRegistry:
             operator_name=operator_name,
             model_family=model_family,
             model_hash=model_hash,
+            system_prompt_hash=system_prompt_hash,  # CRITICAL for identity
             capabilities=[c.value for c in capabilities],
             constraints=[c.value for c in constraints],
             trust_level=AgentTrustLevel.BASIC.value if is_human_backed else AgentTrustLevel.UNTRUSTED.value,
@@ -861,19 +924,51 @@ def reset_registry() -> None:
 # API Integration Functions
 # ============================================
 
+def compute_system_prompt_hash(system_prompt: str) -> str:
+    """
+    Compute deterministic hash of system prompt.
+    
+    This is CRITICAL for AI agent identity:
+    - If system prompt changes from "Be helpful" to "Be evil", identity changes
+    - The hash proves the exact instructions the agent operates under
+    - Empty/None prompts hash to a known "no-prompt" value
+    
+    Args:
+        system_prompt: The full system prompt text
+        
+    Returns:
+        64-character hex hash (or "no_system_prompt" hash if empty)
+    """
+    if not system_prompt or not system_prompt.strip():
+        # Known hash for "no system prompt" - still deterministic
+        return hashlib.sha256(b"__NO_SYSTEM_PROMPT__").hexdigest()
+    
+    # Normalize whitespace for consistent hashing
+    normalized = " ".join(system_prompt.split())
+    return hashlib.sha256(normalized.encode('utf-8')).hexdigest()
+
+
 def compute_model_fingerprint(
     model_name: str,
     model_version: str,
     model_family: str,
     weights_hash: Optional[str] = None,
     config_hash: Optional[str] = None,
+    system_prompt_hash: Optional[str] = None,
 ) -> str:
     """
     Compute a deterministic model fingerprint.
     
+    CRITICAL: This fingerprint defines the AI agent's identity.
+    "Honesty" for an AI agent is a function of (Model + Prompt + Configuration).
+    
+    If ANY of these change, the fingerprint changes, and conceptually
+    it becomes a DIFFERENT agent that needs re-verification.
+    
     In production, this should include:
     - Hash of model weights (from the actual model file)
     - Hash of model configuration
+    - Hash of system prompt (REQUIRED for accountability)
     - Model architecture details
     
     For API models (OpenAI, Anthropic), use their model identifiers.
@@ -884,6 +979,7 @@ def compute_model_fingerprint(
         model_family: Model family (e.g., "transformer", "diffusion")
         weights_hash: Optional hash of model weights
         config_hash: Optional hash of model config
+        system_prompt_hash: Hash of system prompt (CRITICAL for identity)
         
     Returns:
         64-character hex fingerprint
@@ -898,6 +994,8 @@ def compute_model_fingerprint(
         fingerprint_data["weights"] = weights_hash
     if config_hash:
         fingerprint_data["config"] = config_hash
+    if system_prompt_hash:
+        fingerprint_data["system_prompt"] = system_prompt_hash
     
     # Canonical JSON serialization
     canonical = json.dumps(fingerprint_data, sort_keys=True, separators=(',', ':'))
@@ -917,12 +1015,18 @@ def register_ai_agent(
     model_version: str = "1.0.0",
     weights_hash: Optional[str] = None,
     config_hash: Optional[str] = None,
+    system_prompt: Optional[str] = None,
     redis_url: Optional[str] = None,
 ) -> Dict:
     """
     Register an AI agent and return its identity.
     
     This is the main entry point for agent registration.
+    
+    CRITICAL: Agent identity is a function of (Model + Prompt + Configuration).
+    If the system_prompt changes, a NEW identity is created because the agent
+    is conceptually different. "claude-3-opus with 'Be helpful'" is a DIFFERENT
+    agent from "claude-3-opus with 'Be evil'".
     
     Args:
         name: Agent name (e.g., "claude-3-opus", "gpt-4-turbo")
@@ -936,10 +1040,11 @@ def register_ai_agent(
         model_version: Model version string
         weights_hash: Optional hash of model weights
         config_hash: Optional hash of model configuration
+        system_prompt: The system prompt/instructions (CRITICAL for identity)
         redis_url: Optional Redis URL for persistence
         
     Returns:
-        Dict with agent_id, identity, and DID
+        Dict with agent_id, identity, DID, and config fingerprints
     """
     registry = get_registry(redis_url=redis_url)
     
@@ -958,13 +1063,18 @@ def register_ai_agent(
         except ValueError:
             logger.warning(f"Unknown constraint: {c}")
     
+    # Compute system prompt hash (CRITICAL for identity)
+    prompt_hash = compute_system_prompt_hash(system_prompt or "")
+    
     # Compute model fingerprint (deterministic, reproducible)
+    # Now includes system_prompt_hash for full accountability
     model_hash = compute_model_fingerprint(
         model_name=name,
         model_version=model_version,
         model_family=model_family,
         weights_hash=weights_hash,
         config_hash=config_hash,
+        system_prompt_hash=prompt_hash,
     )
     
     identity = registry.register_agent(
@@ -977,14 +1087,103 @@ def register_ai_agent(
         constraints=cons,
         public_key=public_key,
         is_human_backed=is_human_backed,
+        system_prompt_hash=prompt_hash,
     )
+    
+    # Use the identity's DID method which includes config fingerprint
+    did = identity.get_did()
     
     return {
         "success": True,
         "agent_id": identity.agent_id,
         "identity": identity.to_dict(),
-        "did": f"did:honestly:agent:{identity.agent_id}",
+        "did": did,
         "model_fingerprint": model_hash,
+        "system_prompt_hash": prompt_hash,
+        "config_fingerprint": identity.config_fingerprint,
+        # Explains what determines identity
+        "identity_factors": {
+            "model": model_hash,
+            "prompt": prompt_hash,
+            "note": "Changing any factor creates a NEW identity"
+        }
+    }
+
+
+def validate_agent_config(
+    agent_id: str,
+    current_system_prompt: Optional[str] = None,
+    current_model_version: Optional[str] = None,
+    current_weights_hash: Optional[str] = None,
+) -> Dict:
+    """
+    Validate that an agent's configuration hasn't changed since registration.
+    
+    CRITICAL: This detects if someone has modified the agent's system prompt,
+    model, or configuration after registration. If any factor changes,
+    the agent should be re-registered with a new identity.
+    
+    Args:
+        agent_id: The registered agent's ID
+        current_system_prompt: Current system prompt to validate
+        current_model_version: Current model version
+        current_weights_hash: Current weights hash
+        
+    Returns:
+        Dict with validation result and any mismatches detected
+    """
+    registry = get_registry()
+    agent = registry.get_agent(agent_id)
+    
+    if not agent:
+        return {"valid": False, "error": "Agent not found"}
+    
+    mismatches = []
+    
+    # Validate system prompt if provided
+    if current_system_prompt is not None:
+        current_hash = compute_system_prompt_hash(current_system_prompt)
+        if current_hash != agent.system_prompt_hash:
+            mismatches.append({
+                "field": "system_prompt",
+                "registered_hash": agent.system_prompt_hash[:16] + "...",
+                "current_hash": current_hash[:16] + "...",
+                "severity": "CRITICAL",
+                "message": "System prompt has changed - agent identity is invalid"
+            })
+    
+    # Validate config fingerprint integrity
+    if not agent.verify_config_integrity():
+        mismatches.append({
+            "field": "config_fingerprint",
+            "severity": "CRITICAL",
+            "message": "Configuration fingerprint mismatch - possible tampering"
+        })
+    
+    # Check if identity has expired
+    if agent.expires_at:
+        try:
+            expires = datetime.fromisoformat(agent.expires_at.replace('Z', '+00:00'))
+            if datetime.utcnow() > expires.replace(tzinfo=None):
+                mismatches.append({
+                    "field": "expires_at",
+                    "severity": "HIGH",
+                    "message": "Agent identity has expired - re-registration required"
+                })
+        except Exception:
+            pass
+    
+    is_valid = len(mismatches) == 0
+    
+    return {
+        "valid": is_valid,
+        "agent_id": agent_id,
+        "did": agent.get_did(),
+        "config_fingerprint": agent.config_fingerprint,
+        "system_prompt_hash": agent.system_prompt_hash[:16] + "..." if agent.system_prompt_hash else None,
+        "mismatches": mismatches if not is_valid else [],
+        "validated_at": datetime.utcnow().isoformat(),
+        "recommendation": None if is_valid else "Re-register agent with current configuration",
     }
 
 

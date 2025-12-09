@@ -58,8 +58,15 @@ const conductor = new Conductor({
 });
 
 // 2. Register a human (after they prove via Honestly)
-const honestlyProofCommitment = '0x123...'; // From age/authenticity proof
-const identity = await conductor.registerHuman(honestlyProofCommitment, 'user-salt');
+// IMPORTANT: Use client-side identity generation (privacy-preserving)
+import { register } from '@conductme/trust-bridge';
+
+const result = await register(
+  honestlyProofCommitment,
+  honestlyNullifier,
+  honestlyProof
+);
+// Server never sees: salt, trapdoor, or nullifier
 
 // 3. Execute AI actions with human authorization
 const signedAction = await conductor.executeAction(
@@ -84,16 +91,22 @@ const identity = createIdentity();
 const identity = createIdentity('my-secret-seed');
 ```
 
-### `deriveFromHonestlyProof(proofCommitment, salt)`
+### `generateClientIdentity()` ⭐ RECOMMENDED
 
-Derive a Semaphore identity from an Honestly ZK proof.
+Generate Semaphore identity **client-side** (privacy-preserving).
 
 ```typescript
-const identity = deriveFromHonestlyProof(
-  '0x123abc...', // Commitment from Honestly proof
-  'random-salt'  // User-provided salt for privacy
-);
+import { generateClientIdentity } from '@conductme/trust-bridge';
+
+const identity = generateClientIdentity();
+// Secrets (trapdoor, nullifier) never leave browser
 ```
+
+### `deriveFromHonestlyProof()` ⚠️ DEPRECATED
+
+**DO NOT USE** - Privacy vulnerability if salt sent to server.
+
+Use `generateClientIdentity()` + `createBindingCommitment()` instead.
 
 ### `Conductor`
 
