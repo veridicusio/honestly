@@ -1,8 +1,8 @@
 """
-Quantum Computing Client for VERITAS Token Integration
+Quantum Computing Client for VERIDICUS Token Integration
 ======================================================
 
-Provides decentralized quantum computing access via VERITAS tokens.
+Provides decentralized quantum computing access via VERIDICUS tokens.
 Integrates with IBM Quantum, Google Quantum AI, IonQ, and other providers.
 """
 
@@ -48,8 +48,8 @@ class QuantumJob:
     backend: QuantumBackend
     shots: int = 1024
     priority: str = "standard"  # standard, high, vip
-    veritas_payment: int = 0  # VERITAS tokens to pay
-    veritas_staked: int = 0  # VERITAS staked for priority
+    VERIDICUS_payment: int = 0  # VERIDICUS tokens to pay
+    VERIDICUS_staked: int = 0  # VERIDICUS staked for priority
     user_address: str = ""
     created_at: int = 0
 
@@ -61,13 +61,13 @@ class QuantumResult:
     result: Dict[str, Any]
     execution_time_ms: float
     backend_used: str
-    veritas_burned: int
-    veritas_rewarded: int  # To node operator
+    VERIDICUS_burned: int
+    VERIDICUS_rewarded: int  # To node operator
 
 
 class QuantumComputeClient:
     """
-    Client for accessing decentralized quantum computing via VERITAS tokens.
+    Client for accessing decentralized quantum computing via VERIDICUS tokens.
     
     This enables:
     - zkML proof acceleration
@@ -78,17 +78,17 @@ class QuantumComputeClient:
     
     def __init__(
         self,
-        veritas_token_address: Optional[str] = None,
+        VERIDICUS_token_address: Optional[str] = None,
         default_backend: QuantumBackend = QuantumBackend.SIMULATOR,
     ):
         """
         Initialize quantum compute client.
         
         Args:
-            veritas_token_address: VERITAS token contract address
+            VERIDICUS_token_address: VERIDICUS token contract address
             default_backend: Default quantum backend to use
         """
-        self.veritas_token_address = veritas_token_address
+        self.VERIDICUS_token_address = VERIDICUS_token_address
         self.default_backend = default_backend
         self.ibm_provider = None
         
@@ -107,8 +107,8 @@ class QuantumComputeClient:
         backend: Optional[QuantumBackend] = None,
         shots: int = 1024,
         priority: str = "standard",
-        veritas_payment: int = 0,
-        veritas_staked: int = 0,
+        VERIDICUS_payment: int = 0,
+        VERIDICUS_staked: int = 0,
         user_address: str = "",
     ) -> QuantumJob:
         """
@@ -119,8 +119,8 @@ class QuantumComputeClient:
             backend: Quantum backend to use
             shots: Number of shots/measurements
             priority: Job priority (standard, high, vip)
-            veritas_payment: VERITAS tokens to pay (burned)
-            veritas_staked: VERITAS staked for priority (locked)
+            VERIDICUS_payment: VERIDICUS tokens to pay (burned)
+            VERIDICUS_staked: VERIDICUS staked for priority (locked)
             user_address: User's wallet address
             
         Returns:
@@ -141,19 +141,19 @@ class QuantumComputeClient:
             backend=backend,
             shots=shots,
             priority=priority,
-            veritas_payment=veritas_payment,
-            veritas_staked=veritas_staked,
+            VERIDICUS_payment=VERIDICUS_payment,
+            VERIDICUS_staked=VERIDICUS_staked,
             user_address=user_address,
             created_at=int(time.time()),
         )
         
         # In production, this would:
-        # 1. Verify VERITAS payment (burn tokens)
-        # 2. Lock staked VERITAS (if any)
+        # 1. Verify VERIDICUS payment (burn tokens)
+        # 2. Lock staked VERIDICUS (if any)
         # 3. Add job to queue (prioritized by stake)
         # 4. Execute on quantum backend
         # 5. Return results
-        # 6. Reward node operator with VERITAS
+        # 6. Reward node operator with VERIDICUS
         
         logger.info(f"Quantum job submitted: {job_id}, backend: {backend.value}")
         
@@ -187,16 +187,16 @@ class QuantumComputeClient:
         
         execution_time = (time.time() - start_time) * 1000
         
-        # Calculate VERITAS rewards (50% of payment to node operator)
-        veritas_rewarded = job.veritas_payment // 2
+        # Calculate VERIDICUS rewards (50% of payment to node operator)
+        VERIDICUS_rewarded = job.VERIDICUS_payment // 2
         
         return QuantumResult(
             job_id=job.job_id,
             result=result,
             execution_time_ms=execution_time,
             backend_used=job.backend.value,
-            veritas_burned=job.veritas_payment,
-            veritas_rewarded=veritas_rewarded,
+            VERIDICUS_burned=job.VERIDICUS_payment,
+            VERIDICUS_rewarded=VERIDICUS_rewarded,
         )
     
     async def _execute_ibm(self, job: QuantumJob) -> Dict[str, Any]:

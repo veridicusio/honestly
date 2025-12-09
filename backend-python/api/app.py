@@ -443,6 +443,13 @@ try:
 except ImportError:
     pass  # Cross-chain router optional
 
+# Mount Quantum Computing routes
+try:
+    from api.quantum_routes import router as quantum_router
+    app.include_router(quantum_router)
+except ImportError:
+    pass  # Quantum router optional
+
 # Prometheus metrics endpoint
 if PROMETHEUS_AVAILABLE:
     @app.get("/metrics")

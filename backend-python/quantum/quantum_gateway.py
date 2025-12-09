@@ -1,9 +1,9 @@
 """
-VERITAS Quantum Gateway
+VERIDICUS Quantum Gateway
 =======================
 
 Aggregates access to quantum computing providers (IBM, Google, IonQ, etc.)
-via VERITAS token payments. This is the realistic approach - we don't build
+via VERIDICUS token payments. This is the realistic approach - we don't build
 quantum hardware, we provide the access layer.
 """
 
@@ -46,8 +46,8 @@ class QuantumJobRequest:
     job_type: str  # "zkml_proof", "circuit_optimization", "anomaly_detection", etc.
     circuit: Any  # Quantum circuit or job specification
     provider: Optional[QuantumProvider] = None  # Auto-select if None
-    veritas_payment: int = 0  # VERITAS tokens to pay
-    veritas_staked: int = 0  # VERITAS staked for priority
+    VERIDICUS_payment: int = 0  # VERIDICUS tokens to pay
+    VERIDICUS_staked: int = 0  # VERIDICUS staked for priority
     priority: str = "standard"  # standard, high, vip
     user_address: str = ""
 
@@ -59,35 +59,35 @@ class QuantumJobResult:
     result: Dict[str, Any]
     provider_used: str
     execution_time_ms: float
-    veritas_burned: int
+    VERIDICUS_burned: int
     cost_usd: float  # Actual cost in USD
-    veritas_to_usd_rate: float  # Exchange rate used
+    VERIDICUS_to_usd_rate: float  # Exchange rate used
 
 
-class VERITASQuantumGateway:
+class VERIDICUSQuantumGateway:
     """
-    Gateway for accessing quantum computing via VERITAS tokens.
+    Gateway for accessing quantum computing via VERIDICUS tokens.
     
     This aggregates existing quantum cloud providers (IBM, Google, IonQ, etc.)
-    and provides a unified interface paid for with VERITAS tokens.
+    and provides a unified interface paid for with VERIDICUS tokens.
     
     We don't build quantum hardware - we provide the access layer.
     """
     
     def __init__(
         self,
-        veritas_token_address: Optional[str] = None,
-        veritas_to_usd_rate: float = 0.10,  # Example: 1 VERITAS = $0.10
+        VERIDICUS_token_address: Optional[str] = None,
+        VERIDICUS_to_usd_rate: float = 0.10,  # Example: 1 VERIDICUS = $0.10
     ):
         """
-        Initialize VERITAS Quantum Gateway.
+        Initialize VERIDICUS Quantum Gateway.
         
         Args:
-            veritas_token_address: VERITAS token contract address
-            veritas_to_usd_rate: Exchange rate (VERITAS to USD)
+            VERIDICUS_token_address: VERIDICUS token contract address
+            VERIDICUS_to_usd_rate: Exchange rate (VERIDICUS to USD)
         """
-        self.veritas_token_address = veritas_token_address
-        self.veritas_to_usd_rate = veritas_to_usd_rate
+        self.VERIDICUS_token_address = VERIDICUS_token_address
+        self.VERIDICUS_to_usd_rate = VERIDICUS_to_usd_rate
         
         # Initialize provider connections
         self.ibm_provider = None
@@ -109,11 +109,11 @@ class VERITASQuantumGateway:
         request: QuantumJobRequest,
     ) -> QuantumJobResult:
         """
-        Execute quantum job via VERITAS payment.
+        Execute quantum job via VERIDICUS payment.
         
         Flow:
-        1. Verify VERITAS payment (burn tokens)
-        2. Convert VERITAS to USD (using rate)
+        1. Verify VERIDICUS payment (burn tokens)
+        2. Convert VERIDICUS to USD (using rate)
         3. Select best provider (or use specified)
         4. Execute job on provider
         5. Return results
@@ -132,16 +132,16 @@ class VERITASQuantumGateway:
             f"{request.job_type}{request.circuit}{time.time()}".encode()
         ).hexdigest()[:16]
         
-        # Step 1: Verify VERITAS payment
+        # Step 1: Verify VERIDICUS payment
         # In production, this would:
-        # - Check user has enough VERITAS
-        # - Burn VERITAS tokens
+        # - Check user has enough VERIDICUS
+        # - Burn VERIDICUS tokens
         # - Record payment on-chain
         
-        veritas_burned = request.veritas_payment
+        VERIDICUS_burned = request.VERIDICUS_payment
         
-        # Step 2: Convert VERITAS to USD
-        cost_usd = veritas_burned * self.veritas_to_usd_rate
+        # Step 2: Convert VERIDICUS to USD
+        cost_usd = VERIDICUS_burned * self.VERIDICUS_to_usd_rate
         
         # Step 3: Select provider
         provider = request.provider or self._select_best_provider(
@@ -163,9 +163,9 @@ class VERITASQuantumGateway:
             result=result,
             provider_used=provider.value,
             execution_time_ms=execution_time,
-            veritas_burned=veritas_burned,
+            VERIDICUS_burned=VERIDICUS_burned,
             cost_usd=cost_usd,
-            veritas_to_usd_rate=self.veritas_to_usd_rate,
+            VERIDICUS_to_usd_rate=self.VERIDICUS_to_usd_rate,
         )
     
     def _select_best_provider(
@@ -280,13 +280,13 @@ class VERITASQuantumGateway:
 
 
 # Global gateway instance
-_quantum_gateway: Optional[VERITASQuantumGateway] = None
+_quantum_gateway: Optional[VERIDICUSQuantumGateway] = None
 
 
-def get_quantum_gateway() -> VERITASQuantumGateway:
-    """Get global VERITAS Quantum Gateway."""
+def get_quantum_gateway() -> VERIDICUSQuantumGateway:
+    """Get global VERIDICUS Quantum Gateway."""
     global _quantum_gateway
     if _quantum_gateway is None:
-        _quantum_gateway = VERITASQuantumGateway()
+        _quantum_gateway = VERIDICUSQuantumGateway()
     return _quantum_gateway
 

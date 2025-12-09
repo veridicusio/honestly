@@ -3,7 +3,7 @@ Quantum-Accelerated zkML Proof Generation
 =========================================
 
 Uses quantum computing to accelerate Groth16 proof generation for zkML.
-Access via VERITAS tokens.
+Access via VERIDICUS tokens.
 """
 
 import logging
@@ -46,8 +46,8 @@ class QuantumZKMLProver:
         self,
         agent_features: List[List[float]],
         threshold: float = 0.8,
-        veritas_payment: int = 10,
-        veritas_staked: int = 0,
+        VERIDICUS_payment: int = 10,
+        VERIDICUS_staked: int = 0,
         priority: str = "standard",
         user_address: str = "",
     ) -> Dict[str, Any]:
@@ -57,8 +57,8 @@ class QuantumZKMLProver:
         Args:
             agent_features: Agent feature vectors
             threshold: Anomaly threshold
-            veritas_payment: VERITAS tokens to pay (burned)
-            veritas_staked: VERITAS staked for priority
+            VERIDICUS_payment: VERIDICUS tokens to pay (burned)
+            VERIDICUS_staked: VERIDICUS staked for priority
             priority: Job priority
             user_address: User's wallet address
             
@@ -69,7 +69,7 @@ class QuantumZKMLProver:
         optimized_circuit = await self._quantum_optimize_circuit(
             agent_features,
             threshold,
-            veritas_payment=veritas_payment // 2,  # Half for optimization
+            VERIDICUS_payment=VERIDICUS_payment // 2,  # Half for optimization
             user_address=user_address,
         )
         
@@ -78,8 +78,8 @@ class QuantumZKMLProver:
             optimized_circuit,
             agent_features,
             threshold,
-            veritas_payment=veritas_payment // 2,  # Half for proof generation
-            veritas_staked=veritas_staked,
+            VERIDICUS_payment=VERIDICUS_payment // 2,  # Half for proof generation
+            VERIDICUS_staked=VERIDICUS_staked,
             priority=priority,
             user_address=user_address,
         )
@@ -90,7 +90,7 @@ class QuantumZKMLProver:
         self,
         features: List[List[float]],
         threshold: float,
-        veritas_payment: int,
+        VERIDICUS_payment: int,
         user_address: str,
     ) -> Any:
         """
@@ -105,7 +105,7 @@ class QuantumZKMLProver:
         # This is a placeholder - actual implementation would use
         # quantum algorithms to optimize the zkML circuit
         
-        logger.info(f"Quantum optimizing circuit (cost: {veritas_payment} VERITAS)")
+        logger.info(f"Quantum optimizing circuit (cost: {VERIDICUS_payment} VERIDICUS)")
         
         # In production, this would:
         # 1. Create quantum optimization circuit
@@ -121,8 +121,8 @@ class QuantumZKMLProver:
         circuit: Any,
         features: List[List[float]],
         threshold: float,
-        veritas_payment: int,
-        veritas_staked: int,
+        VERIDICUS_payment: int,
+        VERIDICUS_staked: int,
         priority: str,
         user_address: str,
     ) -> Dict[str, Any]:
@@ -136,8 +136,8 @@ class QuantumZKMLProver:
         """
         logger.info(
             f"Quantum generating proof "
-            f"(payment: {veritas_payment} VERITAS, "
-            f"staked: {veritas_staked} VERITAS, "
+            f"(payment: {VERIDICUS_payment} VERIDICUS, "
+            f"staked: {VERIDICUS_staked} VERIDICUS, "
             f"priority: {priority})"
         )
         
@@ -157,7 +157,7 @@ class QuantumZKMLProver:
             "publicInputs": [str(int(threshold * 1000)), "1"],
             "quantum_accelerated": True,
             "quantum_backend": "ibm_quantum",
-            "veritas_burned": veritas_payment,
+            "VERIDICUS_burned": VERIDICUS_payment,
             "execution_time_ms": 50,  # 10x faster than classical
         }
 

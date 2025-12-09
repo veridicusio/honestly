@@ -70,6 +70,14 @@ export default function HomePage() {
                 </Button>
               }
             />
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => window.location.href = '/veritas'}
+            >
+              <Zap className="mr-2 h-4 w-4" />
+              VERIDICUS
+            </Button>
             <Button size="sm" className="bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700">
               <Plus className="mr-2 h-4 w-4" />
               Add AI

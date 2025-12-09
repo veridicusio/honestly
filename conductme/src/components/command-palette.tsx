@@ -45,6 +45,15 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <span>Run &quot;Blog Post&quot; ensemble</span>
           </CommandItem>
         </CommandGroup>
+        <CommandGroup heading="VERIDICUS">
+          <CommandItem onSelect={() => {
+            window.location.href = '/veridicus';
+            onOpenChange(false);
+          }}>
+            <span className="mr-2">📊</span>
+            <span>Open VERIDICUS Analytics</span>
+          </CommandItem>
+        </CommandGroup>
         <CommandGroup heading="All AIs">
           {aiRoster.map((ai) => (
             <CommandItem key={ai.id} onSelect={() => window.open(ai.url, '_blank')}>

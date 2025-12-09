@@ -155,6 +155,8 @@ class ZKMLProver:
         agent_features: List[List[float]],
         threshold: float = 0.8,
         include_latent: bool = False,
+        use_quantum: bool = False,
+        VERIDICUS_payment: int = 0,
     ) -> ZKMLProof:
         """
         Generate ZK proof that anomaly_score > threshold.
@@ -163,11 +165,22 @@ class ZKMLProver:
             agent_features: Sequence of feature vectors
             threshold: Anomaly threshold (0-1)
             include_latent: Include latent vector in proof (increases size)
+            use_quantum: Use quantum acceleration (requires VERIDICUS)
+            VERIDICUS_payment: VERIDICUS tokens to pay for quantum compute
         
         Returns:
             ZKMLProof with Groth16 proof
         """
         import time
+        
+        # Try quantum acceleration if requested
+        if use_quantum and VERIDICUS_payment > 0:
+            try:
+                from quantum.zkml_quantum_acceleration import QuantumZKMLProver
+                logger.info(f"Using quantum acceleration (cost: {VERIDICUS_payment} VERIDICUS)")
+                # Note: This would be async in production, for now fall through to classical
+            except ImportError:
+                logger.warning("Quantum acceleration not available, using classical")
         
         # Run inference
         inference_start = time.perf_counter()

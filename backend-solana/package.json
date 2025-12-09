@@ -1,0 +1,28 @@
+{
+  "name": "VERIDICUS-solana",
+  "version": "0.1.0",
+  "description": "VERIDICUS - Quantum Access Token on Solana",
+  "scripts": {
+    "build": "anchor build",
+    "test": "anchor test",
+    "deploy": "anchor deploy",
+    "lint": "cargo clippy",
+    "format": "cargo fmt"
+  },
+  "keywords": [
+    "solana",
+    "anchor",
+    "quantum",
+    "VERIDICUS",
+    "token"
+  ],
+  "author": "VERIDICUS Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@coral-xyz/anchor": "^0.29.0",
+    "@solana/web3.js": "^1.87.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
+
