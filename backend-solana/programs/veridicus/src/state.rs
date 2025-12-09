@@ -100,5 +100,11 @@ pub enum VERIDICUSError {
     ArithmeticOverflow,
     #[msg("Already voted on this proposal")]
     AlreadyVoted,
+    #[msg("Math overflow")]
+    MathOverflow, // Alias for ArithmeticOverflow for consistency
+    #[msg("Invalid mint - must be VERIDICUS token")]
+    InvalidMint,
+    #[msg("Airdrop still active")]
+    AirdropStillActive,
 }
 

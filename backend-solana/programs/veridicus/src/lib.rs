@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Token, TokenAccount, Transfer, Burn};
+use pyth_solana_receiver_sdk::price_update::{PriceUpdateV2, get_feed_id_from_hex};
 
 mod airdrop;
 mod state;
@@ -10,6 +11,7 @@ use airdrop::*;
 use state::{VERIDICUSState, Staking, UserState, VERIDICUSError};
 use governance::{self, CreateProposal, Vote, ExecuteProposal};
 use liquidity::{self, LockLiquidity, UnlockLiquidity, CheckLiquidityLock};
+use airdrop::{CloseClaimRecord};
 
 declare_id!("VERIDICUS1111111111111111111111111111111111111");
 
@@ -270,12 +272,15 @@ pub mod VERIDICUS {
         token::burn(cpi_ctx, total_burn)?;
         
         // Update state
-        state.total_burned = state.total_burned.checked_add(total_burn).unwrap();
-        state.total_jobs = state.total_jobs.checked_add(1).unwrap();
+        state.total_burned = state.total_burned.checked_add(total_burn)
+            .ok_or(VERIDICUSError::MathOverflow)?;
+        state.total_jobs = state.total_jobs.checked_add(1)
+            .ok_or(VERIDICUSError::MathOverflow)?;
         
         // Update user state (rate limiting)
         user_state.last_job_timestamp = clock.unix_timestamp;
-        user_state.jobs_last_hour = user_state.jobs_last_hour.checked_add(1).unwrap();
+        user_state.jobs_last_hour = user_state.jobs_last_hour.checked_add(1)
+            .ok_or(VERIDICUSError::MathOverflow)?;
         
         emit!(JobExecuted {
             user: ctx.accounts.user.key(),
@@ -301,9 +306,10 @@ pub mod VERIDICUS {
     
     pub fn vote(
         ctx: Context<Vote>,
+        proposal_id: u64,
         choice: bool,
     ) -> Result<()> {
-        governance::vote(ctx, choice)
+        governance::vote(ctx, proposal_id, choice)
     }
     
     pub fn execute_proposal(ctx: Context<ExecuteProposal>) -> Result<()> {
@@ -314,8 +320,9 @@ pub mod VERIDICUS {
     pub fn lock_liquidity(
         ctx: Context<LockLiquidity>,
         unlock_timestamp: i64,
+        amount: u64,
     ) -> Result<()> {
-        liquidity::lock_liquidity(ctx, unlock_timestamp)
+        liquidity::lock_liquidity(ctx, unlock_timestamp, amount)
     }
     
     pub fn unlock_liquidity(ctx: Context<UnlockLiquidity>) -> Result<()> {
@@ -325,25 +332,62 @@ pub mod VERIDICUS {
     pub fn is_liquidity_locked(ctx: Context<CheckLiquidityLock>) -> Result<bool> {
         liquidity::is_liquidity_locked(ctx)
     }
+    
+    // Airdrop functions
+    pub fn close_claim_record(ctx: Context<CloseClaimRecord>) -> Result<()> {
+        airdrop::close_claim_record(ctx)
+    }
 }
 
 /// Helper function to get SOL price from Pyth oracle
 /// Returns price in micro-dollars (price * 10^6)
 fn get_sol_price_from_pyth(price_feed_account: &AccountInfo, current_timestamp: i64) -> Result<u64> {
-    // TODO: Implement Pyth price feed parsing
-    // For now, use a fallback mechanism
-    // In production, parse Pyth PriceUpdateV2 account structure
+    // Parse Pyth PriceUpdateV2 account
+    let account_data = price_feed_account.try_borrow_data()?;
+    let price_update = PriceUpdateV2::try_deserialize(&mut &account_data[..])
+        .map_err(|_| VERIDICUSError::InvalidPriceFeed)?;
+
+    // SOL/USD feed ID (mainnet: ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d)
+    let sol_usd_feed_id = get_feed_id_from_hex(
+        "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d"
+    ).map_err(|_| VERIDICUSError::InvalidPriceFeed)?;
+
+    // Get clock for timestamp validation
+    let clock = Clock::get()?;
     
-    // Pyth price feeds use a specific account structure
-    // This is a placeholder - actual implementation requires:
-    // 1. Parse PriceUpdateV2 from account data
-    // 2. Validate price age (max 60 seconds old)
-    // 3. Extract price and exponent
-    // 4. Convert to micro-dollars
-    
-    // Fallback: Return a default price if oracle unavailable
-    // In production, this should fail if oracle is unavailable
-    Ok(100_000_000) // $100 in micro-dollars (fallback)
+    // Get price for SOL/USD feed (max 60 seconds old)
+    let price_feed = price_update
+        .get_price_no_older_than(
+            &clock,
+            60, // Max 60 seconds old
+            &sol_usd_feed_id,
+        )
+        .map_err(|_| VERIDICUSError::InvalidPriceFeed)?;
+
+    // Pyth prices have exponent (e.g., price=10000, expo=-2 = $100.00)
+    // Convert to micro-dollars (price * 10^6)
+    let price = price_feed.price;
+    let expo = price_feed.exponent;
+
+    // Calculate: price * 10^(6 - expo)
+    // Example: price=10000, expo=-2 → 10000 * 10^(6-(-2)) = 10000 * 10^8 = 100,000,000 ($100.00)
+    let price_usd = if expo < 0 {
+        (price as u64)
+            .checked_mul(10u64.pow((6 - (-expo)) as u32))
+            .ok_or(VERIDICUSError::MathOverflow)?
+    } else {
+        (price as u64)
+            .checked_div(10u64.pow((expo - 6) as u32))
+            .ok_or(VERIDICUSError::MathOverflow)?
+    };
+
+    // Sanity check: SOL price should be between $10 and $10,000
+    require!(
+        price_usd >= 10_000_000 && price_usd <= 10_000_000_000,
+        VERIDICUSError::InvalidPriceFeed
+    );
+
+    Ok(price_usd)
 }
 
     /// Stake VERIDICUS for fee discounts and governance
@@ -351,17 +395,17 @@ fn get_sol_price_from_pyth(price_feed_account: &AccountInfo, current_timestamp: 
         ctx: Context<StakeVERIDICUS>,
         amount: u64,
     ) -> Result<()> {
-        // Transfer tokens to staking account
+        // Transfer tokens to GLOBAL staking vault
         let cpi_accounts = Transfer {
             from: ctx.accounts.user_token_account.to_account_info(),
-            to: ctx.accounts.staking_account.to_account_info(),
+            to: ctx.accounts.staking_vault.to_account_info(), // Global vault
             authority: ctx.accounts.user.to_account_info(),
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new(cpi_program, cpi_accounts);
         token::transfer(cpi_ctx, amount)?;
         
-        // Update staking record
+        // Update user's staking RECORD
         let staking = &mut ctx.accounts.staking;
         
         // Security: Verify user matches if account already exists
@@ -379,7 +423,8 @@ fn get_sol_price_from_pyth(price_feed_account: &AccountInfo, current_timestamp: 
             staking.timestamp = Clock::get()?.unix_timestamp;
         }
         
-        staking.amount = staking.amount.checked_add(amount).unwrap();
+        staking.amount = staking.amount.checked_add(amount)
+            .ok_or(VERIDICUSError::MathOverflow)?;
         staking.timestamp = Clock::get()?.unix_timestamp;
         
         emit!(VERIDICUSStaked {
@@ -404,24 +449,24 @@ fn get_sol_price_from_pyth(price_feed_account: &AccountInfo, current_timestamp: 
             VERIDICUSError::InsufficientStake
         );
         
-        // Transfer tokens back
+        // Transfer from GLOBAL vault using vault's PDA as signer
         let seeds = &[
-            b"staking",
-            ctx.accounts.user.key().as_ref(),
-            &[ctx.bumps.staking_account],
+            b"staking_vault",
+            &[ctx.bumps.staking_vault],
         ];
         let signer = &[&seeds[..]];
         
         let cpi_accounts = Transfer {
-            from: ctx.accounts.staking_account.to_account_info(),
+            from: ctx.accounts.staking_vault.to_account_info(),
             to: ctx.accounts.user_token_account.to_account_info(),
-            authority: ctx.accounts.staking_account.to_account_info(),
+            authority: ctx.accounts.staking_vault.to_account_info(),
         };
         let cpi_program = ctx.accounts.token_program.to_account_info();
         let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
         token::transfer(cpi_ctx, amount)?;
         
-        staking.amount = staking.amount.checked_sub(amount).unwrap();
+        staking.amount = staking.amount.checked_sub(amount)
+            .ok_or(VERIDICUSError::MathOverflow)?;
         
         emit!(VERIDICUSUnstaked {
             user: ctx.accounts.user.key(),
@@ -517,10 +562,19 @@ pub struct ExecuteJob<'info> {
     #[account(mut)]
     pub user: Signer<'info>,
     
-    #[account(mut)]
+    // VERIDICUS mint - must be set during deployment
+    // TODO: Replace with actual mint address after deployment
+    #[account(
+        mut,
+        // address = VERIDICUS_MINT @ VERIDICUSError::InvalidMint, // Uncomment after setting mint
+    )]
     pub mint: Account<'info, anchor_spl::token::Mint>,
     
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = user_token_account.mint == mint.key() @ VERIDICUSError::InvalidMint,
+        constraint = user_token_account.owner == user.key() @ VERIDICUSError::Unauthorized
+    )]
     pub user_token_account: Account<'info, TokenAccount>,
     
     pub token_program: Program<'info, Token>,
@@ -544,12 +598,13 @@ pub struct StakeVERIDICUS<'info> {
     #[account(mut)]
     pub user_token_account: Account<'info, TokenAccount>,
     
+    // GLOBAL staking vault (all users stake here)
     #[account(
         mut,
-        seeds = [b"staking", user.key().as_ref()],
+        seeds = [b"staking_vault"], // Different seed!
         bump
     )]
-    pub staking_account: Account<'info, TokenAccount>,
+    pub staking_vault: Account<'info, TokenAccount>,
     
     pub token_program: Program<'info, Token>,
     pub system_program: Program<'info, System>,
@@ -566,12 +621,13 @@ pub struct UnstakeVERIDICUS<'info> {
     #[account(mut)]
     pub user_token_account: Account<'info, TokenAccount>,
     
+    // GLOBAL staking vault
     #[account(
         mut,
-        seeds = [b"staking", user.key().as_ref()],
+        seeds = [b"staking_vault"],
         bump
     )]
-    pub staking_account: Account<'info, TokenAccount>,
+    pub staking_vault: Account<'info, TokenAccount>,
     
     pub token_program: Program<'info, Token>,
 }

@@ -19,6 +19,5 @@ default = []
 anchor-lang = "0.29.0"
 anchor-spl = "0.29.0"
 solana-program = "~1.18.0"
-# TODO: Add Pyth SDK when implementing full oracle integration
-# pyth-solana-receiver-sdk = "0.1.0"
+pyth-solana-receiver-sdk = "0.1.0"
 

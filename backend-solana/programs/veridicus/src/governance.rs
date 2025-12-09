@@ -38,6 +38,7 @@ pub fn create_proposal(
 /// Vote on a proposal using quadratic voting
 pub fn vote(
     ctx: Context<Vote>,
+    proposal_id: u64, // NEW: Pass ID explicitly
     choice: bool, // true = for, false = against
 ) -> Result<()> {
     let proposal = &mut ctx.accounts.proposal;
@@ -48,28 +49,23 @@ pub fn vote(
         VERIDICUSError::ProposalNotActive
     );
     
-    let vote_record = &mut ctx.accounts.vote_record;
-    
-    // Check if already voted
-    require!(
-        !vote_record.voted,
-        VERIDICUSError::AlreadyVoted
-    );
-    
     // Calculate voting power (quadratic)
     let voting_power = calculate_voting_power(staking.amount);
     
-    // Record vote
+    // Record the vote (init will fail if vote_record already exists, preventing double-voting)
+    let vote_record = &mut ctx.accounts.vote_record;
     vote_record.voter = ctx.accounts.voter.key();
     vote_record.proposal = ctx.accounts.proposal.key();
-    vote_record.choice = choice;
     vote_record.voting_power = voting_power;
-    vote_record.voted = true;
+    vote_record.choice = choice;
+    vote_record.timestamp = Clock::get()?.unix_timestamp;
     
     if choice {
-        proposal.votes_for = proposal.votes_for.checked_add(voting_power).unwrap();
+        proposal.votes_for = proposal.votes_for.checked_add(voting_power)
+            .ok_or(VERIDICUSError::MathOverflow)?;
     } else {
-        proposal.votes_against = proposal.votes_against.checked_add(voting_power).unwrap();
+        proposal.votes_against = proposal.votes_against.checked_add(voting_power)
+            .ok_or(VERIDICUSError::MathOverflow)?;
     }
     
     emit!(VoteCast {
@@ -170,10 +166,10 @@ pub struct Vote<'info> {
     pub staking: Account<'info, Staking>,
     
     #[account(
-        init_if_needed,
+        init,
         payer = voter,
         space = 8 + VoteRecord::LEN,
-        seeds = [b"vote_record", proposal.key().as_ref(), voter.key().as_ref()],
+        seeds = [b"vote_record", proposal_id.to_le_bytes().as_ref(), voter.key().as_ref()],
         bump
     )]
     pub vote_record: Account<'info, VoteRecord>,
@@ -218,13 +214,13 @@ impl Proposal {
 pub struct VoteRecord {
     pub voter: Pubkey,
     pub proposal: Pubkey,
-    pub choice: bool,
     pub voting_power: u64,
-    pub voted: bool,
+    pub choice: bool,
+    pub timestamp: i64,
 }
 
 impl VoteRecord {
-    pub const LEN: usize = 32 + 32 + 1 + 8 + 1; // voter + proposal + choice + power + voted
+    pub const LEN: usize = 32 + 32 + 8 + 1 + 8; // voter + proposal + voting_power + choice + timestamp
 }
 
 // Removed proposal_seed() - now using proposal_id parameter for PDA derivation

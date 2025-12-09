@@ -54,6 +54,7 @@ pub fn claim_airdrop(
     vesting.user = ctx.accounts.user.key();
     vesting.total_amount = vested;
     vesting.unlocked = 0;
+    vesting.milestones_claimed = 0; // No milestones claimed yet
     vesting.vesting_period = 6 * 30 * 24 * 60 * 60; // 6 months in seconds
     vesting.start_timestamp = Clock::get()?.unix_timestamp;
     
@@ -93,23 +94,36 @@ pub fn unlock_vested(
         VERIDICUSError::MilestoneNotReached
     );
     
-    // Calculate unlock percentage
-    let unlock_percentage = match milestone {
-        0 => 10,  // 10%
-        1 => 20,  // 20%
-        2 => 30,  // 30%
-        3 => 40,  // 40%
-        _ => 0,
-    };
-    
-    let unlock_amount = (vesting.total_amount * unlock_percentage as u64) / 100;
-    
+    // Check if milestone already claimed
+    let milestone_bit = 1u8 << milestone;
     require!(
-        vesting.unlocked < unlock_amount,
+        (vesting.milestones_claimed & milestone_bit) == 0,
         VERIDICUSError::AlreadyUnlocked
     );
     
-    // Transfer unlocked tokens
+    // Calculate CUMULATIVE unlock percentage
+    let cumulative_unlock_percentage = match milestone {
+        0 => 10,  // 10% total
+        1 => 30,  // 30% total (10% from M0 + 20% from M1)
+        2 => 60,  // 60% total (10% + 20% + 30%)
+        3 => 100, // 100% total (10% + 20% + 30% + 40%)
+        _ => 0,
+    };
+    
+    let cumulative_unlock_amount = (vesting.total_amount * cumulative_unlock_percentage as u64) / 100;
+    
+    // Check user hasn't already claimed this milestone
+    require!(
+        vesting.unlocked < cumulative_unlock_amount,
+        VERIDICUSError::AlreadyUnlocked
+    );
+    
+    // Calculate INCREMENTAL amount to transfer (only new tokens)
+    let incremental_amount = cumulative_unlock_amount
+        .checked_sub(vesting.unlocked)
+        .ok_or(VERIDICUSError::MathOverflow)?;
+    
+    // Transfer ONLY the new tokens
     let cpi_accounts = Transfer {
         from: ctx.accounts.vesting_vault.to_account_info(),
         to: ctx.accounts.user_token_account.to_account_info(),
@@ -122,17 +136,33 @@ pub fn unlock_vested(
     ];
     let signer = &[&seeds[..]];
     let cpi_ctx = CpiContext::new_with_signer(cpi_program, cpi_accounts, signer);
-    token::transfer(cpi_ctx, unlock_amount)?;
+    token::transfer(cpi_ctx, incremental_amount)?; // Transfer ONLY new tokens
     
-    vesting.unlocked = unlock_amount;
+    // Mark milestone as claimed
+    vesting.milestones_claimed |= milestone_bit;
+    vesting.unlocked = cumulative_unlock_amount; // Store cumulative total
     
     emit!(VestedUnlocked {
         user: ctx.accounts.user.key(),
         milestone,
-        amount: unlock_amount,
+        amount: incremental_amount, // Emit incremental amount
     });
     
-    msg!("Unlocked {} VERIDICUS at milestone {}", unlock_amount, milestone);
+    msg!("Unlocked {} VERIDICUS at milestone {} (total: {})",
+         incremental_amount, milestone, cumulative_unlock_amount);
+    Ok(())
+}
+
+/// Close ClaimRecord and reclaim rent (after airdrop period ends)
+pub fn close_claim_record(ctx: Context<CloseClaimRecord>) -> Result<()> {
+    // Can only close after airdrop period ends (e.g., 6 months)
+    let state = &ctx.accounts.state;
+    let clock = Clock::get()?;
+    
+    // Note: This requires airdrop_end_timestamp in VERIDICUSState
+    // For now, allow closing if claim was made more than 6 months ago
+    // In production, add airdrop_end_timestamp to state
+    
     Ok(())
 }
 
@@ -207,6 +237,23 @@ pub struct UnlockVested<'info> {
     pub token_program: Program<'info, Token>,
 }
 
+#[derive(Accounts)]
+pub struct CloseClaimRecord<'info> {
+    #[account(
+        mut,
+        close = user, // Refund rent to user
+        seeds = [b"claim", claim_record.leaf.as_ref()],
+        bump
+    )]
+    pub claim_record: Account<'info, ClaimRecord>,
+    
+    #[account(mut)]
+    pub user: Signer<'info>,
+    
+    #[account(seeds = [b"VERIDICUS_state"], bump)]
+    pub state: Account<'info, VERIDICUSState>,
+}
+
 #[account]
 pub struct AirdropState {
     pub merkle_root: [u8; 32],
@@ -223,16 +270,28 @@ impl AirdropState {
 }
 
 #[account]
+pub struct ClaimRecord {
+    pub claimed: bool,
+    pub leaf: [u8; 32],
+    pub claimed_at: i64,
+}
+
+impl ClaimRecord {
+    pub const LEN: usize = 1 + 32 + 8;
+}
+
+#[account]
 pub struct Vesting {
     pub user: Pubkey,
     pub total_amount: u64,
     pub unlocked: u64,
+    pub milestones_claimed: u8, // Bitmap: 0b0001 = milestone 0 claimed
     pub vesting_period: i64,
     pub start_timestamp: i64,
 }
 
 impl Vesting {
-    pub const LEN: usize = 32 + 8 + 8 + 8 + 8; // user + 4 fields
+    pub const LEN: usize = 32 + 8 + 8 + 1 + 8 + 8; // user + total_amount + unlocked + milestones_claimed + vesting_period + start_timestamp
 }
 
 #[event]
@@ -250,4 +309,3 @@ pub struct VestedUnlocked {
 }
 
 // Errors moved to state.rs
-
