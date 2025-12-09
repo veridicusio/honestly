@@ -19,7 +19,7 @@ from blockchain.sdk.fabric_client import FabricClient
 from api.qr_generator import generate_qr_response
 from api.cache import cached, get as cache_get, set as cache_set
 from api.monitoring import record_metric
-from api.utils import get_vkey_hash, hmac_sign
+from api.utils import get_verification_key_hash, hmac_sign
 from api.auth import get_current_user
 from datetime import datetime
 
@@ -325,7 +325,7 @@ async def get_share_bundle(token: str, request: Request):
         "verification": {
             "circuit": proof_link.proof_type,
             "vk_url": f"/zkp/artifacts/{proof_link.proof_type}/verification_key.json",
-            "vk_sha256": get_vkey_hash(proof_link.proof_type),
+            "vk_sha256": get_verification_key_hash(proof_link.proof_type),
             "attestation": attestation or None,
         }
     }

@@ -44,7 +44,7 @@ export const resolvers = {
         SKIP $offset LIMIT $limit
       `, { limit: neo4jInt(limit), offset: neo4jInt(offset) });
       
-      return results.map(r => r.app);
+      return results.map(result => result.app);
     },
 
     reviews: async (_, { appId, limit = 10 }) => {
@@ -60,7 +60,7 @@ export const resolvers = {
         LIMIT $limit
       `, { appId, limit: neo4jInt(limit) });
       
-      return results.map(r => r.review);
+      return results.map(result => result.review);
     },
 
     claim: async (_, { id }) => {
@@ -201,7 +201,7 @@ export const resolvers = {
         LIMIT 10
       `, { appId: parent.id });
       
-      return results.map(r => r.review);
+      return results.map(result => result.review);
     },
     
     claims: async (parent) => {
@@ -217,7 +217,7 @@ export const resolvers = {
         ORDER BY c.createdAt DESC
       `, { appId: parent.id });
       
-      return results.map(r => r.claim);
+      return results.map(result => result.claim);
     },
   },
 };
