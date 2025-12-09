@@ -5,10 +5,12 @@ import { AICard } from '@/components/ai-card';
 import { CommandPalette } from '@/components/command-palette';
 import { Button } from '@/components/ui/button';
 import { aiRoster } from '@/lib/ais';
-import { Search, Plus, Zap, Shield, Waves } from 'lucide-react';
+import { Search, Plus, Zap, Shield, Waves, Sparkles } from 'lucide-react';
+import { SummonDialog } from '@/components/summon-dialog';
 
 export default function HomePage() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [summonDialogOpen, setSummonDialogOpen] = useState(false);
 
   // Keyboard shortcut for command palette
   useEffect(() => {
@@ -20,6 +22,13 @@ export default function HomePage() {
     };
     document.addEventListener("keydown", down);
     return () => document.removeEventListener("keydown", down);
+  }, []);
+
+  // Listen for summon dialog events from command palette or AI cards
+  useEffect(() => {
+    const handleOpenSummon = () => setSummonDialogOpen(true);
+    window.addEventListener('open-summon-dialog', handleOpenSummon);
+    return () => window.removeEventListener('open-summon-dialog', handleOpenSummon);
   }, []);
 
   return (
@@ -50,6 +59,24 @@ export default function HomePage() {
               <kbd className="ml-2 pointer-events-none hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
                 ⌘K
               </kbd>
+            </Button>
+            <SummonDialog 
+              open={summonDialogOpen}
+              onOpenChange={setSummonDialogOpen}
+              trigger={
+                <Button size="sm" className="bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700">
+                  <Sparkles className="mr-2 h-4 w-4" />
+                  Summon Swarm
+                </Button>
+              }
+            />
+            <Button 
+              size="sm" 
+              variant="outline"
+              onClick={() => window.location.href = '/veritas'}
+            >
+              <Zap className="mr-2 h-4 w-4" />
+              VERIDICUS
             </Button>
             <Button size="sm" className="bg-gradient-to-r from-blue-500 to-violet-600 hover:from-blue-600 hover:to-violet-700">
               <Plus className="mr-2 h-4 w-4" />

@@ -123,6 +123,12 @@ export function AICard({ ai }: AICardProps) {
               variant="ghost" 
               size="icon" 
               className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              title="Summon with swarm"
+              onClick={(e) => {
+                e.stopPropagation();
+                const event = new CustomEvent('open-summon-dialog', { detail: { preferredAgent: ai.id } });
+                window.dispatchEvent(event);
+              }}
             >
               <Zap className="h-4 w-4" />
             </Button>

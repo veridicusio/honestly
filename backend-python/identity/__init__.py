@@ -30,11 +30,13 @@ from .ai_agent_protocol import (
     AgentAuthenticator,
     register_ai_agent,
     verify_agent_capability,
+    validate_agent_config,  # NEW: Validate agent config integrity
     get_agent_reputation,
     get_registry,
     reset_registry,
     verify_reputation_proof,
     compute_model_fingerprint,
+    compute_system_prompt_hash,  # NEW: Hash system prompt for identity
 )
 
 from .zkp_integration import (
@@ -89,11 +91,13 @@ __all__ = [
     "AgentAuthenticator",
     "register_ai_agent",
     "verify_agent_capability",
+    "validate_agent_config",  # Validate agent hasn't changed
     "get_agent_reputation",
     "get_registry",
     "reset_registry",
     "verify_reputation_proof",
     "compute_model_fingerprint",
+    "compute_system_prompt_hash",  # Hash system prompts for identity
     
     # ZK Integration
     "AAIPZKIntegration",

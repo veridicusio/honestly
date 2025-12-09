@@ -17,10 +17,10 @@ Environment Variables:
 import os
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, List, Literal
+from typing import List, Literal
 from functools import wraps
 
-from fastapi import HTTPException, Depends, Request
+from fastapi import HTTPException, Depends, Request, APIRouter
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import jwt
 from pydantic import BaseModel
@@ -306,8 +306,6 @@ def graphql_require_permission(*permissions: str):
 # Auth Routes (add to FastAPI app)
 # =============================================================================
 
-from fastapi import APIRouter
-
 auth_router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 class LoginRequest(BaseModel):
@@ -328,10 +326,13 @@ async def login(request: LoginRequest):
     
     In production, validate against your user database.
     """
-    # TODO: Replace with actual user validation
-    # This is a placeholder - integrate with your user store
+    # NOTE: Demo users for development/testing
+    # For production, integrate with your user store:
+    #   - Connect to database (Neo4j, PostgreSQL, etc.)
+    #   - Use proper password hashing (bcrypt, argon2)
+    #   - Add account lockout after failed attempts
     
-    # Demo users for development
+    # Demo users (development only)
     demo_users = {
         "admin": {"password": "admin123", "role": "admin"},
         "verifier": {"password": "verify123", "role": "verifier"},

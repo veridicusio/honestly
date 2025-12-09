@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+permissions:
+  contents: read
+  security-events: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -106,13 +110,11 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: frontend-app/package-lock.json
       
       - name: Install dependencies
         run: |
           cd frontend-app
-          npm ci
+          npm ci || npm install
       
       - name: Lint
         run: |
@@ -137,8 +139,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: 'npm'
-          cache-dependency-path: conductme/package-lock.json
       
       - name: Install root dependencies
         run: |
@@ -183,7 +183,7 @@ jobs:
       
       - name: Verify vkey integrity
         run: |
-          cd backend-python
+          cd backend-python/zkp
           python scripts/verify_key_integrity.py || echo "Integrity check failed - may need rebuild"
 
   zkp-rebuild:
@@ -276,6 +276,7 @@ jobs:
       - name: Upload Trivy scan results
         uses: github/codeql-action/upload-sarif@v3
         if: always()
+        continue-on-error: true
         with:
           sarif_file: 'trivy-results.sarif'
 

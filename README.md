@@ -3,8 +3,8 @@
 <div align="center">
 
 ![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
+![Build](https://github.com/aresforblue-ai/honestly/workflows/CI/badge.svg)
+![License](https://img.shields.io/badge/license-AGPL--3.0--only-blue.svg)
 ![Coverage](https://img.shields.io/badge/coverage-85%25-yellow.svg)
 
 **A production-ready, blockchain-verified identity and credential verification system with zero-knowledge proofs, AI integration, and enterprise-grade security.**
@@ -22,14 +22,19 @@ Honestly is a comprehensive **privacy-preserving identity platform** that enable
 | Feature | Description |
 |---------|-------------|
 | 🔐 **Personal Proof Vault** | AES-256-GCM encrypted document storage with zero-knowledge proofs |
-| ✅ **App Verification** | Trust scoring and verification engine for applications |
 | 🤖 **AI Integration** | Structured APIs for LLM and autonomous agent consumption |
-| ⛓️ **Blockchain Anchoring** | Immutable attestations via Hyperledger Fabric |
+| ⛓️ **Blockchain Anchoring** | Immutable attestations via Base/Arbitrum L2 (~$0.001/doc) |
 | 🎭 **Selective Disclosure** | ZK-SNARK proofs for privacy-preserving verification |
+| ⛓️ **VERIDICUS Solana Program** | Quantum computing access token with governance, staking, and airdrop |
 
 ## ✨ What's New
 
-### 🤖 AI Agent Identity Protocol (AAIP) — NEW
+### 📦 Recent Releases
+
+**v1.0.0** — AI Agent Identity Protocol, Enterprise Security, World-Class UI  
+[View Changelog →](https://github.com/aresforblue-ai/honestly/releases/tag/v1.0.0)
+
+### 🤖 AI Agent Identity Protocol (AAIP)
 - **Verifiable AI Identities** — First-of-its-kind protocol for AI agent authentication
 - **Real Groth16 ZK Proofs** — Reputation thresholds proven without revealing scores
 - **Nullifier Tracking** — Replay attack prevention with Redis persistence
@@ -65,17 +70,17 @@ Honestly is a comprehensive **privacy-preserving identity platform** that enable
 │                           HONESTLY PLATFORM                          │
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐  ┌────────────┐ │
-│  │  Frontend   │  │  ConductMe  │  │   GraphQL   │  │   Python   │ │
-│  │   (Vite)    │  │  (Next.js)  │  │   Backend   │  │   Backend  │ │
-│  │             │  │             │  │             │  │            │ │
-│  │  • React    │  │  • AI       │  │  • Apollo   │  │  • FastAPI │ │
-│  │  • Apollo   │  │  • Workflow │  │  • Claims   │  │  • ZK-SNARK│ │
-│  │  • Tailwind │  │  • Trust    │  │  • Scoring  │  │  • Vault   │ │
-│  │  • snarkjs  │  │    Bridge   │  │             │  │  • Redis   │ │
-│  └──────┬──────┘  └──────┬──────┘  └──────┬──────┘  └──────┬─────┘ │
-│         │                │                │                │        │
-│         └────────────────┴────────────────┴────────────────┘        │
+│  ┌─────────────┐  ┌─────────────┐  ┌────────────┐ │
+│  │  ConductMe  │  │   Python   │  │  Solana    │ │
+│  │  (Next.js)  │  │   Backend  │  │  Program   │ │
+│  │             │  │            │  │            │ │
+│  │  • AI       │  │  • FastAPI │  │  • VERIDICUS│ │
+│  │  • Workflow │  │  • ZK-SNARK│  │  • Quantum │ │
+│  │  • Trust    │  │  • Vault   │  │  • Staking │ │
+│  │    Bridge   │  │  • Redis   │  │  • Governance│ │
+│  └──────┬──────┘  └──────┬─────┘  └──────┬─────┘ │
+│         │                │                │        │
+│         └────────────────┴────────────────┘        │
 │                                   │                                  │
 │  ┌─────────────┐  ┌─────────────┐  │  ┌─────────────┐  ┌─────────┐ │
 │  │    Neo4j    │  │    Redis    │──┘  │  Prometheus │  │ Grafana │ │
@@ -202,6 +207,12 @@ cd frontend-app && npm run dev
 | Docs | http://localhost:8000/docs | OpenAPI/Swagger |
 | Neo4j | http://localhost:7474 | Graph Browser |
 | Grafana | http://localhost:3001 | Dashboards |
+
+### 🛠️ Troubleshooting
+
+- **Neo4j connection issues?** Nuke volumes: `docker-compose down -v && docker-compose up`
+- **Port conflicts?** Check for existing services: `lsof -i :8000` (Mac/Linux) or `netstat -ano | findstr :8000` (Windows)
+- **ZK compilation fails?** Increase memory: `export NODE_OPTIONS="--max-old-space-size=8192"`
 
 ---
 
@@ -342,7 +353,17 @@ See [SECURITY.md](SECURITY.md) for details.
 
 ## 📄 License
 
-MIT License — see [LICENSE](LICENSE)
+**GNU Affero General Public License v3.0 (AGPL-3.0-only)**
+
+This software is licensed under the GNU Affero General Public License version 3 ONLY, with additional attribution requirements. Key points:
+
+- ✅ Free to use, modify, and distribute
+- ✅ Source code must be made available
+- ✅ Network use triggers copyleft (AGPL requirement)
+- ⚠️ Must include attribution to aresforblue-ai
+- ⚠️ Production deployments should publish on-chain proof
+
+See [LICENSE](LICENSE) and [LICENSE-EXTRAS.md](LICENSE-EXTRAS.md) for full terms and additional requirements.
 
 ---
 
@@ -350,6 +371,6 @@ MIT License — see [LICENSE](LICENSE)
 
 **Built with ❤️ for privacy, security, and trust.**
 
-[⭐ Star on GitHub](https://github.com/honestly-labs/honestly) • [🐛 Report Bug](https://github.com/honestly-labs/honestly/issues) • [💡 Request Feature](https://github.com/honestly-labs/honestly/issues)
+[⭐ Star on GitHub](https://github.com/aresforblue-ai/honestly) • [🐛 Report Bug](https://github.com/aresforblue-ai/honestly/issues) • [💡 Request Feature](https://github.com/aresforblue-ai/honestly/issues)
 
 </div>

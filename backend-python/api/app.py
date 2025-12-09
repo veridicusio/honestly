@@ -26,6 +26,35 @@ from api.auth import decode_authorization_header
 # Import monitoring router
 from api.monitoring import router as monitoring_router
 
+# Import AI agent routers
+try:
+    from api.ai_agents import router as ai_agents_router
+    AI_AGENTS_AVAILABLE = True
+except ImportError:
+    AI_AGENTS_AVAILABLE = False
+    ai_agents_router = None
+
+try:
+    from api.ml_router import router as ml_router
+    ML_ROUTER_AVAILABLE = True
+except ImportError:
+    ML_ROUTER_AVAILABLE = False
+    ml_router = None
+
+try:
+    from api.websocket_router import router as ws_router
+    WS_ROUTER_AVAILABLE = True
+except ImportError:
+    WS_ROUTER_AVAILABLE = False
+    ws_router = None
+
+try:
+    from api.alerts import get_alert_service
+    ALERTS_AVAILABLE = True
+except ImportError:
+    ALERTS_AVAILABLE = False
+    get_alert_service = None
+
 # Import Prometheus metrics
 try:
     from api.prometheus import get_metrics_endpoint
@@ -387,6 +416,39 @@ app.include_router(vault_router)
 
 # Mount monitoring routes
 app.include_router(monitoring_router)
+
+# Mount AI agent routes
+if AI_AGENTS_AVAILABLE and ai_agents_router:
+    app.include_router(ai_agents_router)
+
+# Mount ML anomaly detection routes
+if ML_ROUTER_AVAILABLE and ml_router:
+    app.include_router(ml_router)
+
+# Mount WebSocket routes for real-time anomaly streaming
+if WS_ROUTER_AVAILABLE and ws_router:
+    app.include_router(ws_router)
+
+# Mount AAIP Swarm routes
+try:
+    from api.swarm_routes import router as swarm_router
+    app.include_router(swarm_router)
+except ImportError:
+    pass  # Swarm router optional
+
+# Mount Cross-Chain Anomaly Federation routes
+try:
+    from api.cross_chain_routes import router as cross_chain_router
+    app.include_router(cross_chain_router)
+except ImportError:
+    pass  # Cross-chain router optional
+
+# Mount Quantum Computing routes
+try:
+    from api.quantum_routes import router as quantum_router
+    app.include_router(quantum_router)
+except ImportError:
+    pass  # Quantum router optional
 
 # Prometheus metrics endpoint
 if PROMETHEUS_AVAILABLE:

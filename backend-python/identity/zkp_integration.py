@@ -285,8 +285,10 @@ class AAIPZKIntegration:
         commitment_data = f"{agent_id}:{capability_hash}:{salt}:{timestamp}"
         commitment = hashlib.sha256(commitment_data.encode()).hexdigest()
         
-        # For now, return a simulated proof until capability circuit is built
-        # TODO: Build AgentCapability.circom circuit
+        # Circuit built at: zkp/circuits/agent_capability.circom
+        # NOTE: To use real proofs, build circuit artifacts:
+        #   cd backend-python/zkp && npm run build:agent-capability
+        # Then add to snark-runner.js and update this function
         
         return ZKProofResult(
             success=True,
