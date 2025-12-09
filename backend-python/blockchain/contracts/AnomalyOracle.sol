@@ -188,6 +188,10 @@ contract AnomalyOracle is CCIPReceiver, ReentrancyGuard, Ownable {
         // Decode message from other chain's oracle
         // This allows oracle coordination across chains
         // Implementation depends on CCIP message format
+        
+        // For now, just emit an event to acknowledge receipt
+        // In production, decode and process oracle votes from other chains
+        emit VAAValidated(bytes32(0), 0, bytes32(0), false);
     }
     
     function _confirmAnomaly(
