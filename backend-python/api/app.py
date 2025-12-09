@@ -436,6 +436,13 @@ try:
 except ImportError:
     pass  # Swarm router optional
 
+# Mount Cross-Chain Anomaly Federation routes
+try:
+    from api.cross_chain_routes import router as cross_chain_router
+    app.include_router(cross_chain_router)
+except ImportError:
+    pass  # Cross-chain router optional
+
 # Prometheus metrics endpoint
 if PROMETHEUS_AVAILABLE:
     @app.get("/metrics")
