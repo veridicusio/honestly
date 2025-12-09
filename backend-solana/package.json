@@ -22,7 +22,25 @@
     "@coral-xyz/anchor": "^0.29.0",
     "@solana/web3.js": "^1.87.0",
     "@types/node": "^20.0.0",
-    "typescript": "^5.0.0"
+    "typescript": "^5.0.0",
+    "merkletreejs": "^3.0.1",
+    "js-sha3": "^0.8.0",
+    "csv-parse": "^5.5.0"
+  },
+  "scripts": {
+    "build": "anchor build",
+    "test": "anchor test",
+    "test:all": "anchor test && npm run test:coverage",
+    "test:coverage": "anchor test --skip-local-validator",
+    "deploy": "anchor deploy",
+    "deploy:devnet": "./scripts/deploy.sh devnet",
+    "deploy:mainnet": "./scripts/deploy-mainnet.sh",
+    "lint": "cargo clippy",
+    "format": "cargo fmt",
+    "generate-merkle": "ts-node scripts/generate-merkle.ts",
+    "create-token": "./scripts/create-token.sh",
+    "create-lp": "./scripts/create-raydium-lp.sh",
+    "lock-liquidity": "./scripts/lock-liquidity.sh"
   }
 }
 

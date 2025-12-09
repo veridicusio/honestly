@@ -17,6 +17,10 @@ impl VERIDICUSState {
     
     // 7 days in seconds (7 * 24 * 60 * 60)
     pub const AUTHORITY_TRANSFER_DELAY: i64 = 604800;
+    
+    // Oracle-based burn rates (USD values)
+    pub const BASE_BURN_USD: u64 = 5_000_000; // $5.00 (scaled by 1M for precision)
+    pub const QUANTUM_JOB_MULTIPLIER_USD: u64 = 1_000_000; // $1.00 per qubit tier
 }
 
 #[account]
@@ -28,6 +32,24 @@ pub struct Staking {
 
 impl Staking {
     pub const LEN: usize = 32 + 8 + 8; // user + amount + timestamp
+}
+
+/// Per-user state for rate limiting
+#[account]
+pub struct UserState {
+    pub user: Pubkey,
+    pub last_job_timestamp: i64,
+    pub jobs_last_hour: u8,      // Jobs executed in the last hour
+    pub hour_start_timestamp: i64, // When the current hour window started
+}
+
+impl UserState {
+    pub const LEN: usize = 32 + 8 + 1 + 8; // user + last_job_timestamp + jobs_last_hour + hour_start_timestamp
+    
+    // Rate limits
+    pub const MIN_COOLDOWN_SECONDS: i64 = 60; // 1 minute cooldown between jobs
+    pub const MAX_JOBS_PER_HOUR: u8 = 10;     // Max 10 jobs per hour per user
+    pub const HOUR_IN_SECONDS: i64 = 3600;    // 1 hour in seconds
 }
 
 #[error_code]
@@ -72,5 +94,7 @@ pub enum VERIDICUSError {
     AuthorityTransferTimelockNotExpired,
     #[msg("Invalid new authority")]
     InvalidNewAuthority,
+    #[msg("Invalid price feed or price too old")]
+    InvalidPriceFeed,
 }
 

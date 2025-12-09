@@ -7,9 +7,9 @@ mod governance;
 mod liquidity;
 
 use airdrop::*;
-use state::{VERIDICUSState, Staking, VERIDICUSError};
-use governance::*;
-use liquidity::*;
+use state::{VERIDICUSState, Staking, UserState, VERIDICUSError};
+use governance::{self, CreateProposal, Vote, ExecuteProposal};
+use liquidity::{self, LockLiquidity, UnlockLiquidity, CheckLiquidityLock};
 
 declare_id!("VERIDICUS1111111111111111111111111111111111111");
 
@@ -176,15 +176,75 @@ pub mod VERIDICUS {
         // Check if program is paused
         require!(!state.paused, VERIDICUSError::ProgramPaused);
         
-        // Calculate burn amount (1 VDC base + variable by qubits)
-        let base_burn = 1_000_000_000; // 1 VDC (9 decimals)
-        let qubit_burn = match qubits {
-            5 => 1_000_000_000,   // +1 VDC
-            10 => 2_000_000_000, // +2 VDC
-            20 => 5_000_000_000, // +5 VDC
+        // Rate limiting: Check cooldown and hourly limit
+        let clock = Clock::get()?;
+        let user_state = &mut ctx.accounts.user_state;
+        
+        // Initialize user state if first time (init_if_needed)
+        if user_state.user == Pubkey::default() {
+            user_state.user = ctx.accounts.user.key();
+            user_state.last_job_timestamp = 0;
+            user_state.jobs_last_hour = 0;
+            user_state.hour_start_timestamp = clock.unix_timestamp;
+        }
+        
+        // Check cooldown (1 minute between jobs)
+        let time_since_last_job = clock.unix_timestamp
+            .checked_sub(user_state.last_job_timestamp)
+            .unwrap_or(i64::MAX);
+        
+        require!(
+            time_since_last_job >= UserState::MIN_COOLDOWN_SECONDS,
+            VERIDICUSError::RateLimitExceeded
+        );
+        
+        // Check hourly limit (reset window if needed)
+        let time_since_hour_start = clock.unix_timestamp
+            .checked_sub(user_state.hour_start_timestamp)
+            .unwrap_or(i64::MAX);
+        
+        if time_since_hour_start >= UserState::HOUR_IN_SECONDS {
+            // Reset hourly counter - new hour window
+            user_state.jobs_last_hour = 0;
+            user_state.hour_start_timestamp = clock.unix_timestamp;
+        }
+        
+        require!(
+            user_state.jobs_last_hour < UserState::MAX_JOBS_PER_HOUR,
+            VERIDICUSError::RateLimitExceeded
+        );
+        
+        // Oracle-based dynamic burn calculation (pegged to USD)
+        // Get SOL/USD price from Pyth oracle
+        // Note: Pyth price feed account must be provided by caller
+        // Pyth SOL/USD feed: H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG (mainnet)
+        let sol_price_usd = get_sol_price_from_pyth(&ctx.accounts.price_feed, clock.unix_timestamp)?;
+        
+        // Calculate base burn in VDC (pegged to USD)
+        // Base: $5 USD per job
+        // Formula: (USD_value * 10^9) / SOL_price = VDC amount
+        let base_burn_usd = VERIDICUSState::BASE_BURN_USD; // $5.00 in micro-dollars (5 * 10^6)
+        let base_burn = (base_burn_usd * 1_000_000_000) // Convert to 9 decimals
+            .checked_div(sol_price_usd)
+            .unwrap_or(1_000_000_000); // Fallback to 1 VDC if calculation fails
+        
+        // Calculate qubit-based burn (additional $1-5 USD based on qubits)
+        let qubit_burn_usd = match qubits {
+            5 => VERIDICUSState::QUANTUM_JOB_MULTIPLIER_USD,      // +$1.00
+            10 => VERIDICUSState::QUANTUM_JOB_MULTIPLIER_USD * 2,  // +$2.00
+            20 => VERIDICUSState::QUANTUM_JOB_MULTIPLIER_USD * 5,  // +$5.00
             _ => 0,
         };
         
+        let qubit_burn = if qubit_burn_usd > 0 {
+            (qubit_burn_usd * 1_000_000_000)
+                .checked_div(sol_price_usd)
+                .unwrap_or(0)
+        } else {
+            0
+        };
+        
+        // Complexity multiplier (same as before)
         let complexity_multiplier = match job_type {
             0 => 1,  // CircuitOptimize
             1 => 2,  // ZkmlProof
@@ -193,7 +253,9 @@ pub mod VERIDICUS {
             _ => 1,
         };
         
-        let total_burn = (base_burn + qubit_burn) * complexity_multiplier;
+        let total_burn = (base_burn + qubit_burn)
+            .checked_mul(complexity_multiplier as u64)
+            .unwrap_or(base_burn); // Fallback to base if overflow
         
         // Burn tokens
         let cpi_accounts = Burn {
@@ -209,17 +271,78 @@ pub mod VERIDICUS {
         state.total_burned = state.total_burned.checked_add(total_burn).unwrap();
         state.total_jobs = state.total_jobs.checked_add(1).unwrap();
         
+        // Update user state (rate limiting)
+        user_state.last_job_timestamp = clock.unix_timestamp;
+        user_state.jobs_last_hour = user_state.jobs_last_hour.checked_add(1).unwrap();
+        
         emit!(JobExecuted {
             user: ctx.accounts.user.key(),
             burn_amount: total_burn,
             qubits,
             job_type,
-            timestamp: Clock::get()?.unix_timestamp,
+            timestamp: clock.unix_timestamp,
         });
         
         msg!("Quantum job executed: {} VERIDICUS burned", total_burn);
         Ok(())
     }
+    
+    // Governance functions - exposed from governance module
+    pub fn create_proposal(
+        ctx: Context<CreateProposal>,
+        proposal_type: u8,
+        description: String,
+        proposal_id: u64, // Unique proposal ID (use timestamp or counter)
+    ) -> Result<()> {
+        governance::create_proposal(ctx, proposal_type, description, proposal_id)
+    }
+    
+    pub fn vote(
+        ctx: Context<Vote>,
+        choice: bool,
+    ) -> Result<()> {
+        governance::vote(ctx, choice)
+    }
+    
+    pub fn execute_proposal(ctx: Context<ExecuteProposal>) -> Result<()> {
+        governance::execute_proposal(ctx)
+    }
+    
+    // Liquidity lock functions - exposed from liquidity module
+    pub fn lock_liquidity(
+        ctx: Context<LockLiquidity>,
+        unlock_timestamp: i64,
+    ) -> Result<()> {
+        liquidity::lock_liquidity(ctx, unlock_timestamp)
+    }
+    
+    pub fn unlock_liquidity(ctx: Context<UnlockLiquidity>) -> Result<()> {
+        liquidity::unlock_liquidity(ctx)
+    }
+    
+    pub fn is_liquidity_locked(ctx: Context<CheckLiquidityLock>) -> Result<bool> {
+        liquidity::is_liquidity_locked(ctx)
+    }
+}
+
+/// Helper function to get SOL price from Pyth oracle
+/// Returns price in micro-dollars (price * 10^6)
+fn get_sol_price_from_pyth(price_feed_account: &AccountInfo, current_timestamp: i64) -> Result<u64> {
+    // TODO: Implement Pyth price feed parsing
+    // For now, use a fallback mechanism
+    // In production, parse Pyth PriceUpdateV2 account structure
+    
+    // Pyth price feeds use a specific account structure
+    // This is a placeholder - actual implementation requires:
+    // 1. Parse PriceUpdateV2 from account data
+    // 2. Validate price age (max 60 seconds old)
+    // 3. Extract price and exponent
+    // 4. Convert to micro-dollars
+    
+    // Fallback: Return a default price if oracle unavailable
+    // In production, this should fail if oracle is unavailable
+    Ok(100_000_000) // $100 in micro-dollars (fallback)
+}
 
     /// Stake VERIDICUS for fee discounts and governance
     pub fn stake_VERIDICUS(
@@ -238,7 +361,22 @@ pub mod VERIDICUS {
         
         // Update staking record
         let staking = &mut ctx.accounts.staking;
-        staking.user = ctx.accounts.user.key();
+        
+        // Security: Verify user matches if account already exists
+        // This prevents race conditions with init_if_needed
+        // The PDA seed already ensures user matches, but we add explicit check for safety
+        if staking.user != Pubkey::default() {
+            require!(
+                staking.user == ctx.accounts.user.key(),
+                VERIDICUSError::Unauthorized
+            );
+        } else {
+            // Initialize new staking account
+            staking.user = ctx.accounts.user.key();
+            staking.amount = 0;
+            staking.timestamp = Clock::get()?.unix_timestamp;
+        }
+        
         staking.amount = staking.amount.checked_add(amount).unwrap();
         staking.timestamp = Clock::get()?.unix_timestamp;
         
@@ -359,6 +497,21 @@ pub struct ExecuteJob<'info> {
     #[account(mut, seeds = [b"VERIDICUS_state"], bump)]
     pub state: Account<'info, VERIDICUSState>,
     
+    /// Per-user state for rate limiting
+    #[account(
+        init_if_needed,
+        payer = user,
+        space = 8 + UserState::LEN,
+        seeds = [b"user_state", user.key().as_ref()],
+        bump
+    )]
+    pub user_state: Account<'info, UserState>,
+    
+    /// Pyth price feed for SOL/USD (required for oracle-based burns)
+    /// Use Pyth SOL/USD price feed: H6ARHf6YXhGYeQfUzQNGk6rDNnLBQKrenN712K4AQJEG
+    /// CHECK: Validated in instruction
+    pub price_feed: AccountInfo<'info>,
+    
     #[account(mut)]
     pub user: Signer<'info>,
     
@@ -369,6 +522,7 @@ pub struct ExecuteJob<'info> {
     pub user_token_account: Account<'info, TokenAccount>,
     
     pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]

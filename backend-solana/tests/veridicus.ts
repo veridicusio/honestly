@@ -81,15 +81,26 @@ describe("VERIDICUS", () => {
     const beforeBalance = await provider.connection.getTokenAccountBalance(userTokenAccount);
     const beforeBurned = (await program.account.VERIDICUSState.fetch(state)).totalBurned;
 
+    // Get user state PDA
+    const [userState] = PublicKey.findProgramAddressSync(
+      [Buffer.from("user_state"), user.publicKey.toBuffer()],
+      program.programId
+    );
+
     // Execute job: 10 qubits, ZkmlProof (type 1)
+    // Note: Price feed is required but using placeholder for now
+    // In production, use actual Pyth price feed account
     await program.methods
       .executeQuantumJob(new anchor.BN(10), new anchor.BN(1))
       .accounts({
         state: state,
+        userState: userState,
         user: user.publicKey,
         mint: mint,
         userTokenAccount: userTokenAccount,
+        priceFeed: SystemProgram.programId, // Placeholder - use actual Pyth feed in production
         tokenProgram: TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
       })
       .signers([user])
       .rpc();
@@ -163,14 +174,23 @@ describe("VERIDICUS", () => {
     for (const test of testCases) {
       const beforeBurned = (await program.account.VERIDICUSState.fetch(state)).totalBurned;
       
+      // Get user state PDA
+      const [userState] = PublicKey.findProgramAddressSync(
+        [Buffer.from("user_state"), user.publicKey.toBuffer()],
+        program.programId
+      );
+
       await program.methods
         .executeQuantumJob(new anchor.BN(test.qubits), new anchor.BN(test.jobType))
         .accounts({
           state: state,
+          userState: userState,
           user: user.publicKey,
           mint: mint,
           userTokenAccount: userTokenAccount,
+          priceFeed: SystemProgram.programId, // Placeholder
           tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
         })
         .signers([user])
         .rpc();

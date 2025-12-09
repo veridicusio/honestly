@@ -14,6 +14,7 @@ pub fn create_proposal(
     ctx: Context<CreateProposal>,
     proposal_type: u8,
     description: String,
+    proposal_id: u64, // Unique proposal ID provided by caller
 ) -> Result<()> {
     let proposal = &mut ctx.accounts.proposal;
     proposal.author = ctx.accounts.author.key();
@@ -128,12 +129,13 @@ pub fn execute_proposal(ctx: Context<ExecuteProposal>) -> Result<()> {
 }
 
 #[derive(Accounts)]
+#[instruction(proposal_id: u64)]
 pub struct CreateProposal<'info> {
     #[account(
         init,
         payer = author,
         space = 8 + Proposal::LEN,
-        seeds = [b"proposal", proposal_seed().as_ref()],
+        seeds = [b"proposal", proposal_id.to_le_bytes().as_ref()],
         bump
     )]
     pub proposal: Account<'info, Proposal>,
@@ -186,10 +188,7 @@ impl Proposal {
     pub const LEN: usize = 32 + 1 + 4 + 200 + 8 + 8 + 8 + 1; // author + type + desc_len + desc + votes + created + status
 }
 
-fn proposal_seed() -> Vec<u8> {
-    // Generate unique seed for proposal
-    Clock::get().unwrap().unix_timestamp.to_le_bytes().to_vec()
-}
+// Removed proposal_seed() - now using proposal_id parameter for PDA derivation
 
 #[event]
 pub struct ProposalCreated {
