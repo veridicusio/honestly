@@ -14,7 +14,7 @@ Features:
 
 import os
 import secrets
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, status, Body
 from pydantic import BaseModel, Field
 
@@ -56,15 +56,23 @@ router = APIRouter(prefix="/identity", tags=["identity"])
 # ============================================
 
 class RegisterAgentRequest(BaseModel):
-    """Request to register an AI agent."""
-    name: str = Field(..., description="Agent name")
+    """Request to register an AI agent.
+    
+    CRITICAL: Agent identity = Model + Prompt + Configuration.
+    The system_prompt is required to create a unique, verifiable identity.
+    """
+    name: str = Field(..., description="Agent name (e.g., claude-3-opus)")
     operator_id: str = Field(..., description="Operator identifier")
     operator_name: str = Field(..., description="Operator name (organization)")
     model_family: str = Field(..., description="Model family (e.g., transformer)")
     capabilities: List[str] = Field(..., description="Agent capabilities")
     constraints: List[str] = Field(default=[], description="Agent constraints")
-    public_key: str = Field(..., description="Agent's public key")
+    public_key: str = Field(..., description="Agent's public key (PEM format)")
     is_human_backed: bool = Field(default=True, description="Has human oversight")
+    system_prompt: Optional[str] = Field(None, description="System prompt/instructions (CRITICAL for identity)")
+    model_version: Optional[str] = Field("1.0.0", description="Model version")
+    weights_hash: Optional[str] = Field(None, description="Hash of model weights (optional)")
+    config_hash: Optional[str] = Field(None, description="Hash of model configuration (optional)")
 
 
 class VerifyCapabilityRequest(BaseModel):
@@ -134,6 +142,10 @@ async def api_register_agent(request: RegisterAgentRequest):
             constraints=request.constraints,
             public_key=request.public_key,
             is_human_backed=request.is_human_backed,
+            system_prompt=request.system_prompt,  # CRITICAL: Required for identity
+            model_version=request.model_version,
+            weights_hash=request.weights_hash,
+            config_hash=request.config_hash,
         )
         return result
     except Exception as e:

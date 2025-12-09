@@ -96,8 +96,9 @@ Get blockchain attestation for a document.
 query {
   attestation(documentId: "doc_123") {
     id
-    fabricTxId
+    transactionHash
     merkleRoot
+    network
     timestamp
     verified
   }
@@ -212,7 +213,8 @@ Upload a document to the vault.
 {
   "document_id": "doc_123",
   "hash": "abc123...",
-  "fabric_tx_id": "tx_456",
+  "transaction_hash": "0x1234...",
+  "network": "base_sepolia",
   "message": "Document uploaded and encrypted successfully"
 }
 ```
@@ -259,7 +261,8 @@ Public endpoint to verify a share link and return proof data.
   "access_level": "PROOF_ONLY",
   "document_hash": "abc123...",
   "attestation": {
-    "fabric_tx_id": "tx_456",
+    "transaction_hash": "0x1234...",
+  "network": "base_sepolia",
     "merkle_root": "def456...",
     "timestamp": "2024-01-01T00:00:00Z"
   }

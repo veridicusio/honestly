@@ -27,23 +27,23 @@ def generate_qr_code(
     Returns:
         PNG image bytes
     """
-    qr = qrcode.QRCode(
+    qr_code_instance = qrcode.QRCode(
         version=1,
         error_correction=error_correction,
         box_size=size,
         border=border,
     )
-    qr.add_data(data)
-    qr.make(fit=True)
+    qr_code_instance.add_data(data)
+    qr_code_instance.make(fit=True)
     
-    img = qr.make_image(fill_color="black", back_color="white")
+    qr_image = qr_code_instance.make_image(fill_color="black", back_color="white")
     
     # Convert to bytes
-    img_bytes = io.BytesIO()
-    img.save(img_bytes, format='PNG')
-    img_bytes.seek(0)
+    image_bytes_buffer = io.BytesIO()
+    qr_image.save(image_bytes_buffer, format='PNG')
+    image_bytes_buffer.seek(0)
     
-    return img_bytes.read()
+    return image_bytes_buffer.read()
 
 
 def generate_qr_response(data: str, **kwargs) -> Response:
@@ -57,8 +57,8 @@ def generate_qr_response(data: str, **kwargs) -> Response:
     Returns:
         FastAPI Response with PNG image
     """
-    qr_bytes = generate_qr_code(data, **kwargs)
-    return Response(content=qr_bytes, media_type="image/png")
+    qr_code_bytes = generate_qr_code(data, **kwargs)
+    return Response(content=qr_code_bytes, media_type="image/png")
 
 
 def generate_svg_qr_code(data: str, **kwargs) -> str:
@@ -72,23 +72,23 @@ def generate_svg_qr_code(data: str, **kwargs) -> str:
     Returns:
         SVG string
     """
-    qr = qrcode.QRCode(
+    qr_code_instance = qrcode.QRCode(
         version=1,
         error_correction=kwargs.get('error_correction', qrcode.constants.ERROR_CORRECT_M),
         box_size=kwargs.get('size', 10),
         border=kwargs.get('border', 4),
     )
-    qr.add_data(data)
-    qr.make(fit=True)
+    qr_code_instance.add_data(data)
+    qr_code_instance.make(fit=True)
     
     # Use SVG factory
-    factory = svg.SvgImage
-    img = qr.make_image(image_factory=factory)
+    svg_image_factory = svg.SvgImage
+    svg_image = qr_code_instance.make_image(image_factory=svg_image_factory)
     
     # Convert to string
-    svg_bytes = io.BytesIO()
-    img.save(svg_bytes)
-    svg_bytes.seek(0)
+    svg_bytes_buffer = io.BytesIO()
+    svg_image.save(svg_bytes_buffer)
+    svg_bytes_buffer.seek(0)
     
-    return svg_bytes.read().decode('utf-8')
+    return svg_bytes_buffer.read().decode('utf-8')
 

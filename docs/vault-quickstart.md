@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide will walk you through setting up and using the Personal Proof Vault MVP to upload documents, generate zero-knowledge proofs, and create shareable attestations anchored on Hyperledger Fabric.
+This guide will walk you through setting up and using the Personal Proof Vault MVP to upload documents, generate zero-knowledge proofs, and create shareable attestations anchored on Base/Arbitrum L2.
 
 ## Prerequisites
 
@@ -10,7 +10,7 @@ This guide will walk you through setting up and using the Personal Proof Vault M
 - Docker and Docker Compose
 - Neo4j (via Docker)
 - Kafka (via Docker)
-- Go 1.21+ (for Fabric chaincode, optional for MVP)
+- Node.js 18+ (for L2 contract deployment, optional)
 
 ## Setup
 
@@ -41,10 +41,10 @@ KAFKA_VAULT_TOPIC=vault_documents
 VAULT_ENCRYPTION_KEY=  # Leave empty for auto-generation (not recommended for production)
 SHARE_LINK_BASE_URL=http://localhost:8000/vault/share
 
-# Fabric Configuration (optional for MVP)
-FABRIC_CHANNEL_NAME=vaultchannel
-FABRIC_CHAINCODE_NAME=vault_anchor
-FABRIC_NETWORK_CONFIG=blockchain/network
+# L2 Blockchain Configuration (optional for MVP)
+VAULT_ANCHOR_ADDRESS=0x...  # Deployed VaultAnchor contract address
+VAULT_ANCHOR_PRIVATE_KEY=0x...  # For signing transactions
+BASE_RPC_URL=https://sepolia.base.org  # Or use Arbitrum
 ```
 
 ### 3. Start Infrastructure Services
@@ -69,25 +69,25 @@ cat neo4j/init.cypher | cypher-shell -u neo4j -p test -a bolt://localhost:7687
 cat neo4j/vault_init.cypher | cypher-shell -u neo4j -p test -a bolt://localhost:7687
 ```
 
-### 5. (Optional) Start Fabric Network
+### 5. (Optional) Deploy L2 Contract
 
 For full blockchain attestation support:
 
 ```bash
-# Navigate to Fabric network directory
-cd blockchain/network
+# Navigate to contract directory
+cd backend-python/blockchain/contracts
 
-# Generate crypto material (requires Fabric binaries)
-# See blockchain/network/README.md for detailed instructions
+# Install dependencies
+npm install
 
-# Start Fabric network
-docker-compose -f docker-compose-fabric.yml up -d
+# Deploy to Base Sepolia (testnet)
+npm run deploy:base-sepolia
 
-# Deploy chaincode (requires Fabric CLI)
-# See blockchain/chaincode/README.md for instructions
+# Or deploy to Base mainnet
+npm run deploy:base
 ```
 
-**Note:** For MVP testing, the Fabric client runs in simulation mode and stores attestations locally.
+**Note:** For MVP testing, you can use the local client without deploying. See `backend-python/blockchain/README.md` for details.
 
 ### 6. Start API Server
 
@@ -127,7 +127,8 @@ Response:
 {
   "document_id": "doc_test_user_1_1234567890",
   "hash": "abc123def456...",
-  "fabric_tx_id": "tx_789...",
+  "transaction_hash": "0x1234...",
+  "network": "base_sepolia",
   "message": "Document uploaded and encrypted successfully"
 }
 ```
@@ -210,7 +211,8 @@ query {
 ```graphql
 query {
   attestation(documentId: "doc_test_user_1_1234567890") {
-    fabricTxId
+    transactionHash
+    network
     merkleRoot
     timestamp
     verified
@@ -270,7 +272,7 @@ print(response.json())
        │
        ▼
 ┌─────────────┐     ┌──────────────┐
-│   Vault     │────▶│   Fabric     │
+│   Vault     │────▶│   Base L2    │
 │  Storage    │     │ (Blockchain) │
 │ (Encrypted) │     └──────────────┘
 └─────────────┘
@@ -308,23 +310,22 @@ ls -la vault_storage/
 chmod -R 755 vault_storage/
 ```
 
-### Fabric Issues
+### L2 Anchoring Issues
 
-For MVP, Fabric runs in simulation mode. Attestations are stored locally in `blockchain/storage/`.
+For MVP, you can use local storage without deploying contracts.
 
-To use real Fabric:
-1. Install Fabric binaries
-2. Generate crypto material
-3. Start Fabric network
-4. Deploy chaincode
-5. Update `FABRIC_NETWORK_CONFIG` in `.env`
+To use real L2 anchoring:
+1. Deploy VaultAnchor contract (see `backend-python/blockchain/contracts/`)
+2. Set `VAULT_ANCHOR_ADDRESS` in `.env`
+3. Set `VAULT_ANCHOR_PRIVATE_KEY` for signing
+4. Configure RPC URL for your chosen network
 
 ## Next Steps
 
 1. **Production Hardening:**
    - Implement proper JWT authentication
    - Add rate limiting
-   - Use production Fabric network
+   - Use production L2 network (Base/Arbitrum)
    - Implement proper key management
 
 2. **Advanced Features:**
