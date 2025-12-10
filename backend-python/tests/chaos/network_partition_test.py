@@ -158,7 +158,7 @@ class NetworkPartitionTester:
                 if self.toxiproxy_container:
                     self.toxiproxy_container.stop()
                     self.toxiproxy_container.remove()
-            except (Exception,):
+            except Exception:
                 pass
 
     def test_latency_injection(self):
@@ -215,7 +215,7 @@ class NetworkPartitionTester:
                 if self.toxiproxy_container:
                     self.toxiproxy_container.stop()
                     self.toxiproxy_container.remove()
-            except (Exception,):
+            except Exception:
                 pass
 
     def cleanup(self):
@@ -224,7 +224,7 @@ class NetworkPartitionTester:
             if self.toxiproxy_container:
                 self.toxiproxy_container.stop()
                 self.toxiproxy_container.remove()
-        except (Exception,):
+        except Exception:
             pass
 
 

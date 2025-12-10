@@ -104,7 +104,7 @@ class SecurityAuditor:
                     )
                     print(f"  ✗ SQL injection vulnerability detected: {payload}")
                     vulnerable = True
-            except Exception:
+            except (requests.HTTPError, requests.ConnectionError, requests.Timeout):
                 pass  # Expected for invalid inputs
 
         if not vulnerable:
@@ -142,8 +142,8 @@ class SecurityAuditor:
                     )
                     print(f"  ✗ XSS vulnerability detected: {payload}")
                     vulnerable = True
-            except Exception:
-                pass
+            except (requests.HTTPError, requests.ConnectionError, requests.Timeout):
+                pass  # Expected for invalid inputs
 
         if not vulnerable:
             print("  ✓ No XSS vulnerabilities detected")
@@ -284,8 +284,8 @@ class SecurityAuditor:
                     )
                     print(f"  ✗ Authentication bypassed with headers: {headers}")
                     vulnerable = True
-            except Exception:
-                pass
+            except (requests.HTTPError, requests.ConnectionError, requests.Timeout):
+                pass  # Expected for invalid inputs
 
         if not vulnerable:
             print("  ✓ Authentication cannot be bypassed")

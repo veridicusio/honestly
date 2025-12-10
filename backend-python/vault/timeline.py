@@ -3,9 +3,12 @@ Timeline service for logging and retrieving user verification events.
 """
 
 import json
+import logging
 from typing import List, Optional, Dict, Any
 from datetime import datetime
 from py2neo import Graph, Node
+
+logger = logging.getLogger(__name__)
 
 
 class TimelineService:
@@ -139,8 +142,9 @@ class TimelineService:
             if "metadata" in event_dict and event_dict["metadata"]:
                 try:
                     event_dict["metadata"] = json.loads(event_dict["metadata"])
-                except (json.JSONDecodeError, TypeError, ValueError):
-                    pass
+                except (json.JSONDecodeError, TypeError, ValueError) as e:
+                    logger.warning(f"Failed to parse metadata JSON: {e}")
+                    event_dict["metadata"] = {}
 
             events.append(event_dict)
 
@@ -181,8 +185,9 @@ class TimelineService:
             if "metadata" in event_dict and event_dict["metadata"]:
                 try:
                     event_dict["metadata"] = json.loads(event_dict["metadata"])
-                except (json.JSONDecodeError, TypeError, ValueError):
-                    pass
+                except (json.JSONDecodeError, TypeError, ValueError) as e:
+                    logger.warning(f"Failed to parse metadata JSON: {e}")
+                    event_dict["metadata"] = {}
 
             # Add related document if present
             if doc_node:

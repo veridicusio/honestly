@@ -241,8 +241,8 @@ class TestNullifierTracking:
         """Test registry tracks used nullifiers."""
         registry = AIAgentRegistry()
 
-        # Register agent
-        _ = registry.register_agent(
+        # Register agent and verify registration
+        identity = registry.register_agent(
             agent_name="test",
             operator_id="op",
             operator_name="Operator",
@@ -252,6 +252,7 @@ class TestNullifierTracking:
             constraints=[],
             public_key="",
         )
+        assert identity is not None, "Agent registration should return identity"
 
         # Simulate proof with nullifier
         proof_data = {
