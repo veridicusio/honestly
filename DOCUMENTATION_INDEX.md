@@ -28,14 +28,17 @@ Last Updated: December 11, 2024
 |----------|---------|----------|
 | [README.md](README.md) | Project overview, features, quick start | Everyone |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | System design, components, data flow | Developers, Architects |
-| [SECURITY.md](SECURITY.md) | Security policy, vulnerability reporting | Security Teams |
+| [SECURITY.md](SECURITY.md) | Security policy, vulnerability reporting, compliance | Security Teams |
 | [SETUP.md](SETUP.md) | Installation and configuration | Developers |
 | [QUICKSTART.md](QUICKSTART.md) | Fast 5-minute introduction | New Users |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | How to contribute to the project | Contributors |
+| [PROJECT_STATUS.md](PROJECT_STATUS.md) | Current project status and roadmap | Everyone |
 
 ### Development & Operations
 | Document | Purpose | Audience |
 |----------|---------|----------|
 | [Makefile](Makefile) | Build automation commands | Developers |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment guide | DevOps |
 | [PRODUCTION-READY.md](PRODUCTION-READY.md) | Production deployment checklist | DevOps |
 | [RESILIENCE.md](RESILIENCE.md) | High availability and resilience | SRE Teams |
 | [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Current limitations and workarounds | Developers |
@@ -43,6 +46,7 @@ Last Updated: December 11, 2024
 ### Testing & Quality
 | Document | Purpose | Audience |
 |----------|---------|----------|
+| [TESTING.md](TESTING.md) | Comprehensive testing guide | QA, Developers |
 | [tests/README.md](tests/README.md) | Testing strategy and execution | QA, Developers |
 | [AUDIT.md](AUDIT.md) | Security audit checklist | Security Teams |
 | [CODE_REVIEW_SUMMARY.md](CODE_REVIEW_SUMMARY.md) | Code quality review results | Tech Leads |
@@ -94,7 +98,8 @@ Last Updated: December 11, 2024
 ### API References
 | Document | Purpose |
 |----------|---------|
-| [docs/API-DOCUMENTATION.md](docs/API-DOCUMENTATION.md) | Complete API reference |
+| [docs/API-REFERENCE.md](docs/API-REFERENCE.md) | Complete API reference (REST, GraphQL, examples) |
+| [docs/API-DOCUMENTATION.md](docs/API-DOCUMENTATION.md) | Additional API documentation |
 | [docs/vault-api.md](docs/vault-api.md) | Vault API endpoints |
 | [docs/vault-quickstart.md](docs/vault-quickstart.md) | Vault quick start guide |
 | [docs/ai-endpoints.md](docs/ai-endpoints.md) | AI integration endpoints |
