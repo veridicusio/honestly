@@ -1,5 +1,26 @@
 # Security Policy
 
+**Comprehensive security policy for the Honestly Truth Engine**
+
+[![Security](https://img.shields.io/badge/security-audited-green.svg)](AUDIT.md)
+[![OWASP](https://img.shields.io/badge/OWASP-compliant-blue.svg)](https://owasp.org/)
+
+Last Updated: December 11, 2024
+
+---
+
+## 📋 Table of Contents
+
+- [Security Features](#-security-features)
+- [Supported Versions](#️-supported-versions)
+- [Reporting Vulnerabilities](#-reporting-a-vulnerability)
+- [Security Architecture](#-security-architecture)
+- [Best Practices](#-security-best-practices)
+- [Compliance](#-compliance)
+- [Security Checklist](#-security-checklist)
+
+---
+
 ## 🔒 Security Features
 
 Honestly implements production-grade security features to protect user data and prevent attacks.
@@ -135,6 +156,126 @@ We take security vulnerabilities seriously. If you discover a security vulnerabi
 - Issues in third-party dependencies (report to them directly)
 - Issues already reported and being worked on
 
+## 🏗️ Security Architecture
+
+### Defense in Depth
+
+Honestly implements multiple layers of security:
+
+```
+┌─────────────────────────────────────────────────────────┐
+│                    Layer 1: Network                      │
+│  - CloudFlare DDoS protection                           │
+│  - Rate limiting at edge                                │
+│  - TLS 1.3 encryption                                   │
+└─────────────────────────────────────────────────────────┘
+                          │
+┌─────────────────────────────────────────────────────────┐
+│                 Layer 2: Application                     │
+│  - Input validation and sanitization                    │
+│  - CORS restrictions                                    │
+│  - Security headers                                     │
+│  - Request authentication                               │
+└─────────────────────────────────────────────────────────┘
+                          │
+┌─────────────────────────────────────────────────────────┐
+│                   Layer 3: Business Logic                │
+│  - Authorization checks                                 │
+│  - ZK proof verification                                │
+│  - Nullifier tracking (replay prevention)               │
+│  - Rate limiting per user/API key                       │
+└─────────────────────────────────────────────────────────┘
+                          │
+┌─────────────────────────────────────────────────────────┐
+│                     Layer 4: Data                        │
+│  - AES-256-GCM encryption at rest                       │
+│  - TLS encryption in transit                            │
+│  - Database access controls                             │
+│  - Audit logging                                        │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Encryption
+
+**Data at Rest:**
+- Document vault: AES-256-GCM
+- Private keys: Encrypted with master key
+- Database: Neo4j native encryption (optional)
+
+**Data in Transit:**
+- TLS 1.3 minimum
+- Perfect forward secrecy
+- HSTS enabled
+
+**Zero-Knowledge Proofs:**
+- Groth16 zk-SNARKs
+- Private inputs never leave client
+- Public signals verified on-chain
+
+### Authentication & Authorization
+
+**JWT Authentication:**
+```python
+# RS256 (recommended) with JWKS
+# ES256 supported
+# HS256 fallback for development only
+```
+
+**API Key Authentication:**
+```python
+# HMAC-SHA256 signatures
+# Per-endpoint rate limiting
+# Key rotation supported
+```
+
+**Role-Based Access Control (RBAC):**
+- Admin: Full access
+- User: Own documents only
+- Agent: API access with key
+- Verifier: Read-only proof verification
+
+### Threat Model
+
+**Protected Against:**
+- ✅ SQL/Cypher injection
+- ✅ Cross-site scripting (XSS)
+- ✅ Cross-site request forgery (CSRF)
+- ✅ Man-in-the-middle attacks
+- ✅ Replay attacks (nullifiers)
+- ✅ Timing attacks (constant-time ops)
+- ✅ Brute force (rate limiting)
+- ✅ DDoS (multiple layers)
+
+**Not Protected Against:**
+- ❌ Physical access to server
+- ❌ Compromised admin credentials
+- ❌ Zero-day vulnerabilities
+- ❌ Social engineering of users
+- ❌ Quantum computing attacks on current crypto
+
+### Security Monitoring
+
+**Real-time Monitoring:**
+- Failed authentication attempts
+- Rate limit violations
+- Suspicious patterns
+- Unusual access patterns
+
+**Alerting:**
+- Critical: Immediate notification
+- High: Within 1 hour
+- Medium: Daily digest
+- Low: Weekly report
+
+**Audit Logging:**
+- All API requests
+- Authentication events
+- Authorization failures
+- Data access
+- Configuration changes
+
+---
+
 ## 🔐 Security Best Practices
 
 ### For Users
@@ -155,6 +296,60 @@ We take security vulnerabilities seriously. If you discover a security vulnerabi
 6. **Keep Dependencies Updated**: Regularly update dependencies
 7. **Security Headers**: Always include security headers
 8. **Encrypt Sensitive Data**: Encrypt data at rest and in transit
+
+## 📋 Compliance
+
+### GDPR Compliance
+
+Honestly is designed with privacy-first principles:
+
+- ✅ **Data Minimization** — Only collect necessary data
+- ✅ **Privacy by Design** — ZK proofs enable selective disclosure
+- ✅ **Right to be Forgotten** — Document deletion supported
+- ✅ **Data Portability** — Export in standard formats
+- ✅ **Consent Management** — Explicit user consent required
+- ✅ **Data Protection** — AES-256-GCM encryption
+- ✅ **Audit Trail** — Comprehensive logging
+
+See [GDPR Compliance Checklist](docs/gdpr-compliance-checklist.md) for details.
+
+---
+
+### SOC 2 Type II
+
+Honestly implements controls aligned with SOC 2 Trust Service Criteria:
+
+| Criteria | Status | Controls |
+|----------|--------|----------|
+| **Security** | ✅ Implemented | Access control, encryption, monitoring |
+| **Availability** | ✅ Implemented | Health checks, redundancy, backups |
+| **Processing Integrity** | ✅ Implemented | Input validation, error handling |
+| **Confidentiality** | ✅ Implemented | Encryption, access control, ZK proofs |
+| **Privacy** | ✅ Implemented | Consent, data minimization, deletion |
+
+---
+
+### NIST Cybersecurity Framework
+
+Honestly aligns with NIST CSF:
+
+- **Identify** — Asset management, risk assessment
+- **Protect** — Access control, data security, training
+- **Detect** — Monitoring, detection processes
+- **Respond** — Incident response plan
+- **Recover** — Recovery planning, backups
+
+---
+
+### Standards Compliance
+
+- ✅ **OWASP Top 10** — Protection against all top 10 vulnerabilities
+- ✅ **CIS Controls** — Implementation of critical security controls
+- ✅ **PCI DSS** (if applicable) — No credit card data stored
+- ✅ **HIPAA** (if applicable) — Encryption and access controls
+- ✅ **ISO 27001** — Information security management principles
+
+---
 
 ## 🔍 Security Audit Checklist
 
@@ -262,7 +457,17 @@ For security-related questions or concerns:
 
 ---
 
-**Last Updated**: 2024-12-19  
+**Last Updated**: December 11, 2024
 **Version**: 1.0.0  
 **Security Contact**: security@honestly.dev  
-**CVE Database**: https://github.com/aresforblue-ai/honestly/security/advisories
+**CVE Database**: https://github.com/veridicusio/honestly/security/advisories
+
+---
+
+<div align="center">
+
+**Questions?**
+
+[Report Vulnerability](mailto:security@honestly.dev) • [Documentation](DOCUMENTATION_INDEX.md) • [Contributing](CONTRIBUTING.md)
+
+</div>
