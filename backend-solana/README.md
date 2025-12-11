@@ -71,12 +71,12 @@ solana airdrop 2
 ```
 backend-solana/
 ├── programs/
-│   └── veritas/
+│   └── veridicus/
 │       ├── src/
 │       │   └── lib.rs          # Main Anchor program
 │       └── Cargo.toml
 ├── tests/
-│   └── veritas.ts              # Anchor tests
+│   └── veridicus.ts              # Anchor tests
 ├── migrations/
 │   └── deploy.ts               # Deployment script
 └── Anchor.toml                 # Anchor config
