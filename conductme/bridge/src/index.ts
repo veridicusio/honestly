@@ -26,7 +26,7 @@ export {
   getOrCreateIdentity,
   exportIdentityForBackup,
   importIdentityFromBackup,
-} from './client-identity.js';
+} from './client-identity';
 
 // Server-side registration (privacy preserving)
 export {
@@ -34,7 +34,7 @@ export {
   HonestlyNullifierRegistry,
   RegistrationResult,
   getDefaultRegistrar,
-} from './server-registration.js';
+} from './server-registration';
 
 // Legacy identity management (some functions deprecated)
 export {
@@ -45,7 +45,7 @@ export {
   deriveFromHonestlyProof, // @deprecated - use client-side generation
   ConductMeGroup,
   NullifierRegistry,
-} from './identity.js';
+} from './identity';
 
 // Orchestration
 export {
@@ -54,7 +54,7 @@ export {
   AIAction,
   SignedAction,
   Actions,
-} from './conductor.js';
+} from './conductor';
 
 // Re-export Semaphore types for convenience
 export { Identity } from '@semaphore-protocol/identity';

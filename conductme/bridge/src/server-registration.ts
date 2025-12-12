@@ -14,7 +14,7 @@
  * 4. Store the binding commitment (for audit, not for linking)
  */
 
-import { ConductMeGroup, NullifierRegistry } from './identity.js';
+import { ConductMeGroup, NullifierRegistry } from './identity';
 
 export interface RegistrationRequest {
   semaphoreCommitment: string;
