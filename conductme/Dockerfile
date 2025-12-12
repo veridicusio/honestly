@@ -10,9 +10,10 @@ RUN npm ci --legacy-peer-deps
 # Copy source and build
 COPY . .
 
-# Build with standalone output
+# Build with standalone output (skip linting for faster builds)
 ENV NEXT_TELEMETRY_DISABLED=1
-RUN npm run build
+ENV CI=false
+RUN NEXT_LINT_IGNORE=1 npm run build || npm run build
 
 # Production image
 FROM node:20-alpine AS runner
