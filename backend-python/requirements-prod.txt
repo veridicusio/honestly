@@ -1,0 +1,21 @@
+# Production dependencies - lighter for Cloud Run
+fastapi==0.115.5
+uvicorn[standard]==0.32.0
+ariadne==0.23.0
+python-dotenv==1.0.1
+numpy==1.26.4
+
+# Vault & Security
+cryptography>=41.0.0
+qrcode[pil]>=7.4.2
+pyjwt>=2.8.0
+pydantic>=2.0.0
+
+# Cache/Rate limiting
+redis>=5.0.0
+
+# HTTP client
+httpx>=0.24.0
+
+# Note: Heavy deps (torch, sentence-transformers, faiss) 
+# excluded for faster cold starts. Add back if needed.

@@ -2,6 +2,9 @@
 const nextConfig = {
   reactStrictMode: true,
   
+  // Enable standalone output for Cloud Run / Docker
+  output: 'standalone',
+  
   // Don't fail build on ESLint errors
   eslint: {
     ignoreDuringBuilds: true,

@@ -1,0 +1,15 @@
+# Ignore for Cloud Run deployment
+.git
+.gitignore
+__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.coverage
+htmlcov
+tests/
+*.md
+.env
+.env.*
+venv/
+.venv/
