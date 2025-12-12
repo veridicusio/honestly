@@ -73,7 +73,7 @@ export default function HomePage() {
             <Button 
               size="sm" 
               variant="outline"
-              onClick={() => window.location.href = '/veritas'}
+              onClick={() => window.location.href = '/veridicus'}
             >
               <Zap className="mr-2 h-4 w-4" />
               VERIDICUS

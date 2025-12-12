@@ -337,61 +337,9 @@ pub mod VERIDICUS {
     pub fn close_claim_record(ctx: Context<CloseClaimRecord>) -> Result<()> {
         airdrop::close_claim_record(ctx)
     }
-}
-
-/// Helper function to get SOL price from Pyth oracle
-/// Returns price in micro-dollars (price * 10^6)
-fn get_sol_price_from_pyth(price_feed_account: &AccountInfo, current_timestamp: i64) -> Result<u64> {
-    // Parse Pyth PriceUpdateV2 account
-    let account_data = price_feed_account.try_borrow_data()?;
-    let price_update = PriceUpdateV2::try_deserialize(&mut &account_data[..])
-        .map_err(|_| VERIDICUSError::InvalidPriceFeed)?;
-
-    // SOL/USD feed ID (mainnet: ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d)
-    let sol_usd_feed_id = get_feed_id_from_hex(
-        "ef0d8b6fda2ceba41da15d4095d1da392a0d2f8ed0c6c7bc0f4cfac8c280b56d"
-    ).map_err(|_| VERIDICUSError::InvalidPriceFeed)?;
-
-    // Get clock for timestamp validation
-    let clock = Clock::get()?;
-    
-    // Get price for SOL/USD feed (max 60 seconds old)
-    let price_feed = price_update
-        .get_price_no_older_than(
-            &clock,
-            60, // Max 60 seconds old
-            &sol_usd_feed_id,
-        )
-        .map_err(|_| VERIDICUSError::InvalidPriceFeed)?;
-
-    // Pyth prices have exponent (e.g., price=10000, expo=-2 = $100.00)
-    // Convert to micro-dollars (price * 10^6)
-    let price = price_feed.price;
-    let expo = price_feed.exponent;
-
-    // Calculate: price * 10^(6 - expo)
-    // Example: price=10000, expo=-2 → 10000 * 10^(6-(-2)) = 10000 * 10^8 = 100,000,000 ($100.00)
-    let price_usd = if expo < 0 {
-        (price as u64)
-            .checked_mul(10u64.pow((6 - (-expo)) as u32))
-            .ok_or(VERIDICUSError::MathOverflow)?
-    } else {
-        (price as u64)
-            .checked_div(10u64.pow((expo - 6) as u32))
-            .ok_or(VERIDICUSError::MathOverflow)?
-    };
-
-    // Sanity check: SOL price should be between $10 and $10,000
-    require!(
-        price_usd >= 10_000_000 && price_usd <= 10_000_000_000,
-        VERIDICUSError::InvalidPriceFeed
-    );
-
-    Ok(price_usd)
-}
 
     /// Stake VERIDICUS for fee discounts and governance
-    pub fn stake_VERIDICUS(
+    pub fn stake_veridicus(
         ctx: Context<StakeVERIDICUS>,
         amount: u64,
     ) -> Result<()> {

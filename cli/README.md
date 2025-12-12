@@ -164,5 +164,5 @@ DEBUG=honestly* honestly share --age 18 --dob 1995
 
 ## License
 
-MIT
+AGPL-3.0-only (see [LICENSE](../LICENSE))
 

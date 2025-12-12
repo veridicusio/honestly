@@ -216,7 +216,7 @@ docker run -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/test neo4j:5
 cd backend-python && uvicorn api.app:app --reload
 
 # 4. Start frontend
-cd frontend-app && npm run dev
+cd conductme && npm run dev
 ```
 
 ### Access Points

@@ -1,7 +1,7 @@
 {
   "name": "honestly",
   "version": "1.0.0",
-  "description": "Comprehensive path utilities library for Node.js with validation and sanitization",
+  "description": "Privacy-preserving identity verification with zero-knowledge proofs and blockchain anchoring",
   "main": "src/index.js",
   "scripts": {
     "test": "jest",
@@ -11,12 +11,14 @@
     "lint:fix": "eslint src tests --fix"
   },
   "keywords": [
-    "path",
-    "utilities",
-    "validation",
-    "sanitization",
-    "filesystem",
-    "security"
+    "identity",
+    "zero-knowledge",
+    "zkp",
+    "blockchain",
+    "privacy",
+    "verification",
+    "solana",
+    "web3"
   ],
   "author": "",
   "license": "AGPL-3.0-only",
