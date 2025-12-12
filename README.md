@@ -353,10 +353,20 @@ curl -X POST http://localhost:8000/ai/share-link \
 - ✅ **Encryption** — AES-256-GCM for vault documents
 - ✅ **Audit Logging** — Structured security events
 
+### Security Updates
+
+**Latest**: CVE-2025-66478 (React Server Components) - ✅ NOT AFFECTED  
+See [SECURITY-CVE-2025-66478.md](SECURITY-CVE-2025-66478.md) for details.
+
 ### Reporting Vulnerabilities
 
 Email: security@honestly.dev  
 See [SECURITY.md](SECURITY.md) for details.
+
+### Security Documentation
+
+- [Security Update Procedures](docs/SECURITY-UPDATES.md)
+- [Dependency Installation Status](DEPENDENCY-INSTALL-STATUS.md)
 
 ---
 
