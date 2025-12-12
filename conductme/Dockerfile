@@ -5,10 +5,13 @@ WORKDIR /app
 
 # Install dependencies
 COPY package*.json ./
-RUN npm ci
+RUN npm ci --legacy-peer-deps
 
 # Copy source and build
 COPY . .
+
+# Build with standalone output
+ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # Production image
@@ -18,6 +21,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV PORT=8080
+ENV HOSTNAME="0.0.0.0"
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy built assets
 COPY --from=builder /app/.next/standalone ./

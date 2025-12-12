@@ -18,5 +18,5 @@ COPY . .
 # Cloud Run uses PORT env variable
 ENV PORT=8080
 
-# Run with production settings
-CMD exec uvicorn api.app:app --host 0.0.0.0 --port ${PORT} --workers 1
+# Run Cloud Run optimized app
+CMD exec uvicorn api.app_cloudrun:app --host 0.0.0.0 --port ${PORT} --workers 1
