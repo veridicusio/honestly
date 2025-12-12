@@ -55,8 +55,7 @@ repos:
           (?x)^(
             package-lock\.json|
             backend-python/zkp/node_modules/|
-            conductme/node_modules/|
-            frontend-app/node_modules/
+            conductme/node_modules/
           )$
 
   # ESLint for JavaScript

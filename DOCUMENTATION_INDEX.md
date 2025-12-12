@@ -269,8 +269,8 @@ make down       # Stop services
 # Backend development
 cd backend-python && uvicorn api.app:app --reload
 
-# Frontend development
-cd frontend-app && npm run dev
+# ConductMe development
+cd conductme && npm run dev
 
 # ZKP circuit compilation
 cd backend-python/zkp && npm run build:all

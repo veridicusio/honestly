@@ -1,4 +1,4 @@
-.PHONY: help install up down clean dev-frontend dev-backend-gql dev-backend-py
+.PHONY: help install up down clean dev-conductme dev-backend-py test
 
 help:
 	@echo "Honestly - Truth Engine & Personal Proof Vault"
@@ -6,10 +6,9 @@ help:
 	@echo "Available commands:"
 	@echo "  make install         - Install all dependencies"
 	@echo "  make up              - Start infrastructure (Docker)"
-	@echo "  make up-min          - Start minimal stack (API+Neo4j+frontend)"
+	@echo "  make up-min          - Start minimal stack (API+Neo4j)"
 	@echo "  make down            - Stop infrastructure"
-	@echo "  make dev-frontend    - Start frontend development server"
-	@echo "  make dev-backend-gql - Start GraphQL backend development server"
+	@echo "  make dev-conductme   - Start ConductMe development server"
 	@echo "  make dev-backend-py  - Start Python backend development server"
 	@echo "  make clean           - Clean all build artifacts"
 	@echo "  make test            - Run all tests"
@@ -21,10 +20,12 @@ help:
 	@echo "  make scan            - Dependency/FS scan (trivy/npm audit/pip-audit if available)"
 
 install:
-	@echo "Installing frontend dependencies..."
-	cd frontend-app && npm install
-	@echo "Installing GraphQL backend dependencies..."
-	cd backend-graphql && npm install
+	@echo "Installing root dependencies..."
+	npm install
+	@echo "Installing ConductMe dependencies..."
+	cd conductme && npm install
+	@echo "Installing ConductMe Core dependencies..."
+	cd conductme/core && npm install
 	@echo "Installing Python backend dependencies..."
 	cd backend-python && pip install -r requirements.txt
 
@@ -73,32 +74,28 @@ sbom:
 
 scan:
 	@if command -v trivy >/dev/null 2>&1; then trivy fs --severity CRITICAL,HIGH --exit-code 1 . || true; else echo "trivy not installed; skipping trivy scan"; fi
-	@if command -v npm >/dev/null 2>&1; then cd frontend-app && npm audit --production || true; fi
-	@if command -v npm >/dev/null 2>&1; then cd backend-graphql && npm audit --production || true; fi
+	@if command -v npm >/dev/null 2>&1; then cd conductme && npm audit --production || true; fi
 	@if command -v pip-audit >/dev/null 2>&1; then pip-audit || true; else echo "pip-audit not installed; skipping"; fi
 
 down:
 	docker-compose down -v
 
-dev-frontend:
-	cd frontend-app && npm run dev
-
-dev-backend-gql:
-	cd backend-graphql && npm run dev
+dev-conductme:
+	cd conductme && npm run dev
 
 dev-backend-py:
 	cd backend-python && uvicorn api.app:app --reload
 
 clean:
-	rm -rf frontend-app/node_modules frontend-app/dist
-	rm -rf backend-graphql/node_modules backend-graphql/dist
+	rm -rf conductme/node_modules conductme/.next
+	rm -rf conductme/core/node_modules conductme/core/.next
 	find backend-python -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find backend-python -type f -name "*.pyc" -delete 2>/dev/null || true
 
 test:
-	@echo "Running frontend tests..."
-	cd frontend-app && npm test || true
-	@echo "Running GraphQL backend tests..."
-	cd backend-graphql && npm test || true
+	@echo "Running root tests..."
+	npm test || true
+	@echo "Running ConductMe lint..."
+	cd conductme && npm run lint || true
 	@echo "Running Python backend tests..."
 	cd backend-python && pytest || true

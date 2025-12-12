@@ -4,22 +4,7 @@ This document tracks known issues, limitations, and areas for future improvement
 
 ## 📦 Dependency Deprecation Warnings
 
-### Apollo Server v4 (backend-graphql)
-- **Status**: Will transition to end-of-life on January 26, 2026
-- **Current Version**: 4.9.5 (package.json), 4.12.2 (installed via npm)
-- **Impact**: Low (non-security related, plenty of time before EOL)
-- **Recommendation**: Upgrade to Apollo Server v5 before EOL date (requires Node.js non-EOL version)
-- **Note**: Apollo v5 is available and upgrading typically takes only a few minutes
-- **Documentation**: https://www.apollographql.com/docs/apollo-server/previous-versions
-
-### ESLint 8.x (backend-graphql)
-- **Status**: No longer supported
-- **Current Version**: 8.57.1
-- **Impact**: Low (functionally working, security updates unlikely)
-- **Recommendation**: Upgrade to ESLint 9.x
-- **Note**: May require updating ESLint configuration format
-
-### Other npm Deprecations
+### npm Deprecations
 The following packages show deprecation warnings but are transitive dependencies:
 - `rimraf@3.0.2` - Used by dependencies, no direct impact
 - `inflight@1.0.6` - Memory leak in legacy code, consider lru-cache alternative
@@ -30,12 +15,10 @@ The following packages show deprecation warnings but are transitive dependencies
 
 ### ConductMe Dependencies
 - **Issue**: `conductme/` and `conductme/core/` directories don't have `node_modules` tracked
-- **Status**: Expected behavior (node_modules in .gitignore)
-- **Solution**: Run `cd conductme && npm install && cd core && npm install`
-- **Documentation Needed**: Add setup instructions to main README.md
+- **Status**: ✅ Fixed - Installation instructions added to README.md
+- **Solution**: Run `cd conductme && npm install && cd core && npm install` (Documented in main README)
 
 ### Docker Compose Files
-- **Resolved**: Removed incorrect reference to `docker-compose-updated.yml`
 - **Available Files**:
   - `docker-compose.yml` - Main orchestration
   - `docker-compose.dev.yml` - Development setup
@@ -44,22 +27,15 @@ The following packages show deprecation warnings but are transitive dependencies
 
 ## 🧪 Testing Infrastructure
 
-### Backend GraphQL Tests
-- **Status**: ✅ Fixed - Test infrastructure created
-- **Location**: `backend-graphql/tests/`
-- **Current State**: Placeholder test exists, real tests should be added as features are developed
-- **Next Steps**: Add integration tests for GraphQL resolvers
-
-### Python Backend Tests
+### Python Backend Tests (inc. GraphQL)
 - **Status**: ✅ Tests exist and functional
-- **Location**: `backend-python/tests/`, `backend-python/*/tests/`
-- **Coverage**: Good coverage across API, vault, identity, and ZKP modules
+- **Location**: `backend-python/tests/`
+- **Coverage**: Good coverage across API, vault, identity, ZKP, and GraphQL endpoints (Ariadne)
 
 ### Frontend Tests
-- **Status**: E2E tests exist
-- **Location**: `frontend-app/tests/e2e/`
-- **Framework**: Playwright
-- **Next Steps**: Consider adding unit tests for React components
+- **Status**: ⚠️ Missing (Previous E2E tests removed with legacy frontend-app)
+- **Location**: N/A
+- **Next Steps**: Implement Playwright E2E tests for `conductme` (Next.js)
 
 ## 🔐 Security Considerations
 
@@ -96,17 +72,16 @@ Some functions have minimal implementations marked with `pass`:
 ## 🚀 Future Improvements
 
 ### High Priority
-1. Add comprehensive GraphQL integration tests
-2. Document ConductMe setup process
-3. Create upgrade guide for Apollo Server v5 migration
+1. Expand GraphQL integration tests coverage
+2. Add comprehensive documentation for ConductMe components
+3. Implement E2E tests for ConductMe frontend
 
 ### Medium Priority
-1. Upgrade ESLint to v9.x in backend-graphql
-2. Add React component unit tests
-3. Review and update npm package versions
+1. Add React component unit tests
+2. Review and update npm package versions
 
 ### Low Priority
-1. Consider TypeScript migration for better type safety
+1. Consider TypeScript migration for better type safety (where not already used)
 2. Evaluate replacing deprecated transitive dependencies
 3. Performance profiling and optimization
 
@@ -114,13 +89,11 @@ Some functions have minimal implementations marked with `pass`:
 
 ### Current Status
 - **Root Level**: Jest with path utilities tests ✅
-- **Backend Python**: pytest with good coverage ✅
-- **Backend GraphQL**: Basic placeholder test ⚠️
-- **Frontend**: Playwright E2E tests ✅
+- **Backend Python**: pytest with good coverage (REST & GraphQL) ✅
+- **Frontend**: ⚠️ Tests needed
 
 ### Target Goals
 - Maintain >80% code coverage across all modules
-- Add mutation/integration tests for GraphQL
 - Expand E2E test scenarios
 
 ## 🔄 CI/CD Status
@@ -128,7 +101,7 @@ Some functions have minimal implementations marked with `pass`:
 All CI workflows are functional:
 - ✅ Python lint and test
 - ✅ Frontend build
-- ✅ ConductMe build (requires npm install)
+- ✅ ConductMe build
 - ✅ ZKP integrity checks
 - ✅ Docker build
 - ✅ Security scanning
@@ -143,11 +116,10 @@ All CI workflows are functional:
 - Vault quickstart (docs/vault-quickstart.md)
 
 ### Areas for Improvement
-- ConductMe-specific documentation
-- Upgrade/migration guides
+- ConductMe-specific documentation details
 - Troubleshooting guide
 
 ---
 
-**Last Updated**: 2025-12-08  
+**Last Updated**: 2025-12-12
 **Review Frequency**: Quarterly or when major changes occur

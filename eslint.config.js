@@ -5,9 +5,17 @@ module.exports = [
       '**/node_modules/**',
       '**/dist/**',
       '**/coverage/**',
-      'backend-graphql/**',  // Has its own config
-      'frontend-app/**',     // Has its own config
+<<<<<<< Current (Your changes)
+<<<<<<< Current (Your changes)
+      'conductme/**',        // Has its own config (Next.js)
+=======
       'conductme/**',        // Has its own config
+      'backend-solana/**',   // Rust/TypeScript project
+      'backend-python/**',   // Python project
+>>>>>>> Incoming (Background Agent changes)
+=======
+      'conductme/**',        // Has its own config (Next.js)
+>>>>>>> Incoming (Background Agent changes)
     ],
     languageOptions: {
       ecmaVersion: 2021,

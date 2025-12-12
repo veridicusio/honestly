@@ -24,10 +24,10 @@ This document describes the complete architecture of the Honestly Truth Engine p
 ┌─────────────────────────────────────────────────────────────┐
 │                      FRONTEND LAYER                         │
 │  ┌──────────────────────────────────────────────────────┐   │
-│  │  React + Vite (frontend-app)                         │   │
-│  │  - AppWhistler UI                                    │   │
+│  │  ConductMe (Next.js 14)                              │   │
+│  │  - AI Orchestration Dashboard                        │   │
 │  │  - Trust Score Dashboard                             │   │
-│  │  - Claims Verification Interface                     │   │
+│  │  - Workflow Builder (React Flow + Zustand)           │   │
 │  ├──────────────────────────────────────────────────────┤   │
 │  │  ConductMe Core (Next.js)                            │   │
 │  │  - Trust Bridge (Semaphore identity + proofs)        │   │

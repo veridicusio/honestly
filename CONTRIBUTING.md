@@ -95,12 +95,13 @@ Branch naming conventions:
    cd backend-python
    pytest tests/ -v --cov
    
-   # Frontend tests
-   cd frontend-app
-   npm test
+   # ConductMe build verification
+   cd conductme
+   npm run lint
+   npm run build
    
-   # E2E tests
-   npm run test:e2e
+   # Root level tests
+   npm test
    
    # ZKP tests
    ZK_TESTS=1 pytest tests/test_zk_properties.py -v

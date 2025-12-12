@@ -31,8 +31,6 @@ yarn-error.log*
 Thumbs.db
 
 # Build outputs
-frontend-app/dist/
-backend-graphql/dist/
 *.tsbuildinfo
 .next/
 out/
@@ -53,9 +51,6 @@ vault/storage/
 # Docker
 .docker/
 volumes/
-
-# Prisma
-backend-graphql/prisma/migrations/
 
 # Coverage
 coverage/

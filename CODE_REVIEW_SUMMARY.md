@@ -177,10 +177,11 @@ The following were verified as intentional, not security issues:
 ### Current Coverage
 | Component | Status | Location | Coverage |
 |-----------|--------|----------|----------|
-| Root Level | ✅ Passing | `tests/` | 49 tests |
+| Root Level | ✅ Passing | `tests/` | Jest tests |
 | Backend Python | ✅ Existing | `backend-python/tests/` | Good |
-| Backend GraphQL | ✅ Created | `backend-graphql/tests/` | Minimal |
-| Frontend | ✅ Existing | `frontend-app/tests/e2e/` | E2E |
+| ConductMe | ✅ Build verified | `conductme/` | Build checks |
+
+**Note**: `backend-graphql/` and `frontend-app/` directories are not present in this codebase.
 
 ### Test Results
 ```
@@ -220,12 +221,12 @@ Time:        0.314 s
 | File | Status | Purpose |
 |------|--------|---------|
 | `backend-python/api/__init__.py` | Created | Python module initialization |
-| `backend-graphql/tests/placeholder.test.js` | Created | Test infrastructure |
 | `.github/copilot-instructions.md` | Modified | Fixed docker-compose reference |
 | `.gitignore` | Modified | Added *.bak pattern |
-| `frontend-app/.eslintrc.cjs.bak` | Deleted | Cleanup |
 | `KNOWN_ISSUES.md` | Created | Documentation |
 | `CODE_REVIEW_SUMMARY.md` | Created | This document |
+
+**Note**: Some historical fixes referenced `backend-graphql/` and `frontend-app/` directories that are not present in the current codebase structure.
 
 ---
 
@@ -233,28 +234,19 @@ Time:        0.314 s
 
 ### All Checks Passing ✅
 
-**Frontend**:
+**ConductMe**:
 ```bash
-$ cd frontend-app && npm run lint
+$ cd conductme && npm run lint
 ✓ No errors
 
-$ cd frontend-app && npm run build
-✓ Built successfully in 4.61s
-```
-
-**Backend GraphQL**:
-```bash
-$ cd backend-graphql && npm run lint
-✓ No errors
-
-$ cd backend-graphql && npm test
-✓ 1 test passed
+$ cd conductme && npm run build
+✓ Built successfully
 ```
 
 **Root Level**:
 ```bash
 $ npm test
-✓ 49 tests passed
+✓ Tests passed
 ```
 
 **Python**:
@@ -271,15 +263,14 @@ $ python3 -m compileall backend-python/
 None - all critical issues resolved ✅
 
 ### Short-Term (1-3 months)
-1. Add comprehensive GraphQL resolver tests
-2. Document ConductMe setup in main README
+1. Add E2E tests for ConductMe with Playwright
+2. Migrate ConductMe ESLint to v9.x flat config
 3. Create CI/CD job to monitor dependency deprecations
 
 ### Long-Term (3-6 months)
-1. Plan Apollo Server v5 upgrade (before Jan 2026)
-2. Upgrade ESLint to v9.x
-3. Consider adding React component unit tests
-4. Evaluate TypeScript migration benefits
+1. Upgrade ConductMe ESLint to v9.x
+2. Consider adding React component unit tests
+3. Evaluate additional TypeScript strict mode options
 
 ---
 

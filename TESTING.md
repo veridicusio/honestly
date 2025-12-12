@@ -53,13 +53,13 @@ make test-solana
 cd backend-python
 pytest tests/ -v --cov
 
-# Frontend tests
-cd frontend-app
-npm test
+# ConductMe build verification
+cd conductme
+npm run lint
+npm run build
 
-# E2E tests
-cd frontend-app
-npm run test:e2e
+# Root level tests
+npm test
 
 # Solana program tests
 cd backend-solana
@@ -91,7 +91,7 @@ def test_document_encryption():
 
 **JavaScript Example:**
 ```javascript
-// frontend-app/src/components/__tests__/DocumentCard.test.jsx
+// conductme/src/components/__tests__/AgentCard.test.tsx
 import { render, screen } from '@testing-library/react';
 import DocumentCard from '../DocumentCard';
 
@@ -136,7 +136,7 @@ Test complete user workflows from frontend to backend.
 
 **Playwright E2E Test:**
 ```javascript
-// frontend-app/e2e/vault.spec.js
+// conductme/e2e/workflow.spec.ts
 import { test, expect } from '@playwright/test';
 
 test('upload and verify document', async ({ page }) => {
@@ -310,36 +310,33 @@ pytest -m "not slow" tests/
 
 ---
 
-### Frontend
+### ConductMe
 
 ```bash
-cd frontend-app
+cd conductme
 
-# Run unit tests
-npm test
+# Run lint
+npm run lint
 
-# Run with coverage
-npm test -- --coverage
+# Build verification
+npm run build
 
-# Run in watch mode
-npm test -- --watch
-
-# Run specific test file
-npm test -- DocumentCard.test.jsx
+# Run type check
+npx tsc --noEmit
 ```
 
 ---
 
-### E2E Tests
+### E2E Tests (if configured)
 
 ```bash
-cd frontend-app
+cd conductme
 
 # Install Playwright browsers (first time only)
 npx playwright install
 
 # Run E2E tests headless
-npm run test:e2e
+npx playwright test
 
 # Run with browser UI
 npm run test:e2e:headed
@@ -501,11 +498,11 @@ open htmlcov/index.html  # macOS
 # or: xdg-open htmlcov/index.html  # Linux
 ```
 
-**Frontend:**
+**ConductMe:**
 ```bash
-cd frontend-app
-npm test -- --coverage
-open coverage/index.html
+cd conductme
+npm run lint
+npm run build
 ```
 
 ---

@@ -428,8 +428,8 @@ Key production considerations:
 
 ## 🔗 Related Components
 
-- **Frontend**: [frontend-app/](../frontend-app/)
-- **GraphQL Backend**: [backend-graphql/](../backend-graphql/)
+- **ConductMe**: [conductme/](../conductme/) - AI Orchestration Frontend
+- **Solana Program**: [backend-solana/](../backend-solana/) - VERIDICUS Token
 - **Documentation**: [docs/](../docs/)
 
 ## 📧 Support

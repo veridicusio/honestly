@@ -4,34 +4,32 @@ This guide enables AI coding agents to be productive in the Honestly codebase. I
 
 ## 🏛️ Architecture Overview
 
-- **Frontend**: `frontend-app/` (React, Vite, Tailwind, Apollo)
-- **GraphQL API**: `backend-graphql/` (Node.js, Apollo, Prisma)
+- **ConductMe**: `conductme/` (Next.js 14, React, Tailwind, AI Orchestration)
 - **Python Backend**: `backend-python/` (FastAPI, Neo4j, ZKPs, Redis, Kafka, Fabric)
 - **Solana/Quantum**: `backend-solana/` (Anchor, Rust, VERIDICUS)
 - **Docs**: `docs/`, `ARCHITECTURE.md`, `SECURITY.md`
 
 **Key Flows:**
-- User/agent → Frontend/ConductMe → Python API (vault, ZK proofs, AAIP) → Neo4j/Redis/Blockchain
+- User/agent → ConductMe → Python API (vault, ZK proofs, AAIP) → Neo4j/Redis/Blockchain
 - ZK circuits: `backend-python/zkp/` (Groth16, Circom, snarkjs)
 - AI agent registration & proof: `backend-python/identity/`
 
 ## 🛠️ Dev Workflows
 
 - **Install**: `make install` (all), or per-component (`npm install`, `pip install -r requirements.txt`)
-- **Run stack**: `make up` (Docker), or manual: start Neo4j, then backend/frontend
-- **Test**: `make test` (all), or `pytest`, `npm test`, `anchor test`
+- **Run stack**: `make up` (Docker), or manual: start Neo4j, then backend/ConductMe
+- **Test**: `make test` (all), or `pytest`, `npm run lint`, `anchor test`
 - **ZK build**: `cd backend-python/zkp && npm run build:*` (see ZKP README)
-- **Lint**: `npm run lint` (frontend/GraphQL)
+- **Lint**: `npm run lint` (ConductMe)
 - **Rebuild ZK**: `make zkp-rebuild` (wasm/zkey/vkey)
 
 ## 🔑 Project Patterns & Conventions
 
 - **Python**: FastAPI, Pydantic, async/await, type hints, modular routes (`api/`), ZK logic in `zkp/`, agent logic in `identity/`
-- **GraphQL**: Schema-first, resolvers by type, ES6 modules, Winston logging
-- **Frontend**: Functional React, hooks, Tailwind, modular components
+- **ConductMe**: Next.js 14, functional React, hooks, Tailwind, modular components
 - **ZK Proofs**: Use Groth16, nullifier tracking, C++ witness for large circuits, see `zkp/README.md`
 - **Security**: Never touch `.env`, secrets, or key material. All input validated. Rate limiting, audit logging, and security headers enforced.
-- **Testing**: Unit/integration/E2E in `tests/`, ZK property tests with `ZK_TESTS=1 pytest ...`
+- **Testing**: Unit/integration tests in `tests/`, ZK property tests with `ZK_TESTS=1 pytest ...`
 
 ## 🧩 Integration Points
 
@@ -54,8 +52,6 @@ This guide enables AI coding agents to be productive in the Honestly codebase. I
 
 ---
 **For unclear patterns or missing info, ask for feedback or check referenced docs.**
-make down                   # Stop Docker services
-```
 
 ## 📝 Coding Standards & Conventions
 
@@ -66,29 +62,33 @@ make down                   # Stop Docker services
 - Use meaningful variable and function names
 - Add comments only when necessary to explain complex logic
 
-### Frontend (React/JavaScript)
+### ConductMe (Next.js/React/TypeScript)
 - Use functional components with hooks
-- Always import React at the top of component files
 - Follow React best practices
 - Use ES6+ features (arrow functions, destructuring, async/await)
-- Component files should use JSX extension
+- Component files should use TSX extension
 - Style with TailwindCSS utility classes
 - Keep components modular and reusable
 
 **Example:**
-```javascript
-// frontend-app/src/components/AppCard.jsx
+```typescript
+// conductme/src/components/ui/AppCard.tsx
 import React from 'react';
 
-const AppCard = ({ app }) => {
-  const { name, platform, whistlerScore, grade } = app;
-  
+interface AppCardProps {
+  name: string;
+  platform: string;
+  score: number;
+  grade: string;
+}
+
+const AppCard: React.FC<AppCardProps> = ({ name, platform, score, grade }) => {
   return (
     <div className="bg-white rounded-lg shadow-md p-6">
       <h3 className="text-xl font-bold">{name}</h3>
       <p className="text-gray-600">{platform}</p>
       <div className="mt-4">
-        <span className="text-2xl font-bold">{whistlerScore}</span>
+        <span className="text-2xl font-bold">{score}</span>
         <span className="ml-2 text-lg">Grade: {grade}</span>
       </div>
     </div>
@@ -96,31 +96,6 @@ const AppCard = ({ app }) => {
 };
 
 export default AppCard;
-```
-
-### Backend GraphQL (Node.js)
-- Use ES6 modules (type: "module" in package.json)
-- Implement proper error handling
-- Use async/await for asynchronous operations
-- Follow GraphQL schema-first design
-- Organize resolvers by type
-- Use Winston for structured logging
-
-**Example:**
-```javascript
-// backend-graphql/src/graphql/resolvers/appResolvers.js
-export const appResolvers = {
-  Query: {
-    app: async (_, { id }, { dataSources }) => {
-      try {
-        return await dataSources.appAPI.getAppById(id);
-      } catch (error) {
-        logger.error('Failed to fetch app', { id, error: error.message });
-        throw new Error('Could not retrieve app');
-      }
-    },
-  },
-};
 ```
 
 ### Backend Python (FastAPI)
@@ -157,7 +132,6 @@ async def upload_document(doc: DocumentUpload):
 
 ### Database
 - **Neo4j**: Use parameterized queries to prevent injection
-- **PostgreSQL**: Use Prisma ORM for type-safe database access
 - Always use transactions for multi-step operations
 - Add proper indexes for frequently queried fields
 
@@ -187,31 +161,24 @@ async def upload_document(doc: DocumentUpload):
 
 ## 🧪 Testing Guidelines
 
-### Frontend Tests
+### ConductMe Tests
 - Write unit tests for utility functions
 - Test component rendering with React Testing Library
-- Mock GraphQL queries with MockedProvider
 - Test user interactions and state changes
-
-### Backend Tests
-- Write unit tests for resolvers and services
-- Mock database calls in unit tests
-- Write integration tests for API endpoints
-- Test error handling and edge cases
-- Aim for >80% code coverage
+- Run `npm run lint` for linting
 
 ### Python Tests
 - Use pytest for all tests
 - Mock external dependencies (Neo4j, Kafka, Fabric)
 - Test both success and failure paths
 - Include async test cases
+- Aim for >80% code coverage
 
 ## 🎯 Task Guidance
 
 ### Good Tasks for Copilot:
-- Adding new GraphQL queries or mutations
+- Adding new API endpoints
 - Creating new React components
-- Implementing new API endpoints
 - Writing tests for existing code
 - Fixing bugs with clear reproduction steps
 - Updating documentation
@@ -230,19 +197,13 @@ async def upload_document(doc: DocumentUpload):
 
 ## 📚 Key Dependencies & Technologies
 
-### Frontend
-- **React 18.2** - UI library
-- **Vite** - Build tool
+### ConductMe
+- **Next.js 14** - React framework
+- **React 18** - UI library
 - **TailwindCSS** - Styling
-- **Apollo Client** - GraphQL client
-- **React Router** - Navigation
-
-### GraphQL Backend
-- **Apollo Server 4.9** - GraphQL server
-- **Express 4.18** - Web framework
-- **Prisma 5.7** - ORM
-- **Winston 3.11** - Logging
-- **Helmet** - Security headers
+- **TypeScript** - Type safety
+- **Radix UI** - Component primitives
+- **React Flow** - Workflow visualization
 
 ### Python Backend
 - **FastAPI** - Web framework
@@ -275,12 +236,11 @@ async def upload_document(doc: DocumentUpload):
 - [Setup Guide](/SETUP.md)
 - [Vault API Documentation](/docs/vault-api.md)
 - [Vault Quick Start](/docs/vault-quickstart.md)
-- [Project Scope](/docs/Scope.md)
+- [ConductMe README](/conductme/README.md)
 
 ## ⚡ Performance Considerations
 
-- Frontend: Lazy load components, optimize bundle size
-- GraphQL: Use DataLoader to batch database queries
+- ConductMe: Lazy load components, optimize bundle size
 - Python: Use async operations for I/O-bound tasks
 - Database: Add indexes for frequently queried fields
 - Cache responses where appropriate
@@ -290,8 +250,7 @@ async def upload_document(doc: DocumentUpload):
 ### Port Already in Use
 ```bash
 # Check what's using the port
-lsof -i :3000  # Frontend
-lsof -i :4000  # GraphQL
+lsof -i :3001  # ConductMe
 lsof -i :8000  # Python
 ```
 
@@ -322,8 +281,7 @@ docker logs honestly-neo4j
 
 ## 🎓 Learning Resources
 
-- **GraphQL**: https://graphql.org/learn/
-- **Apollo Server**: https://apollographql.com/docs/apollo-server/
+- **Next.js**: https://nextjs.org/docs
 - **FastAPI**: https://fastapi.tiangolo.com/
 - **Neo4j Cypher**: https://neo4j.com/developer/cypher/
 - **React**: https://react.dev/

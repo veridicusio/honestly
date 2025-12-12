@@ -43,25 +43,16 @@ sleep 30
 # Initialize Neo4j schema
 docker exec honestly-neo4j cypher-shell -u neo4j -p test < neo4j/init.cypher
 docker exec honestly-neo4j cypher-shell -u neo4j -p test < neo4j/vault_init.cypher
-
-# (Optional) Initialize PostgreSQL for GraphQL backend
-# If using Prisma:
-cd backend-graphql
-npm run prisma:migrate
-cd ..
 ```
 
 ### Step 4: Configure Environment
 
 ```bash
-# Frontend
-cp frontend-app/.env.example frontend-app/.env
+# Copy example environment file
+cp env.example .env
 
-# GraphQL Backend
-cp backend-graphql/.env.example backend-graphql/.env
-
-# Python Backend (if needed)
-# Edit DATABASE_URL, NEO4J credentials if different
+# Python Backend environment variables (if needed)
+# Edit NEO4J credentials if different from defaults
 ```
 
 ### Step 5: Start Development Servers

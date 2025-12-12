@@ -207,7 +207,10 @@ docker-compose -f docker-compose.min.yml up
 # Or manually:
 # 1. Install dependencies
 pip install -r backend-python/requirements.txt
-cd frontend-app && npm install
+# ConductMe Setup
+cd conductme && npm install
+cd core && npm install
+cd ../.. # Return to root
 
 # 2. Start Neo4j
 docker run -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/test neo4j:5
@@ -216,7 +219,7 @@ docker run -p 7474:7474 -p 7687:7687 -e NEO4J_AUTH=neo4j/test neo4j:5
 cd backend-python && uvicorn api.app:app --reload
 
 # 4. Start frontend
-cd frontend-app && npm run dev
+cd conductme && npm run dev
 ```
 
 ### Access Points

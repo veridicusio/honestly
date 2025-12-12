@@ -98,36 +98,6 @@ jobs:
           fail_ci_if_error: false
 
   # ============================================
-  # Frontend App (Skip if doesn't exist)
-  # ============================================
-  frontend-build:
-    name: Frontend Build
-    runs-on: ubuntu-latest
-    if: false  # Skip - frontend-app doesn't exist
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-      
-      - name: Install dependencies
-        run: |
-          cd frontend-app
-          npm ci || npm install
-      
-      - name: Lint
-        run: |
-          cd frontend-app
-          npm run lint || true  # Don't fail on lint warnings
-      
-      - name: Build
-        run: |
-          cd frontend-app
-          npm run build
-
-  # ============================================
   # ConductMe
   # ============================================
   conductme-build:
@@ -246,7 +216,7 @@ jobs:
   docker-build:
     name: Docker Build
     runs-on: ubuntu-latest
-    needs: [python-lint, frontend-build]
+    needs: [python-lint]
     steps:
       - uses: actions/checkout@v4
       
