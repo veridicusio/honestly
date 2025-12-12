@@ -1,67 +1,89 @@
+# Minimal Docker Compose - Just the essentials to run
+# Usage: docker-compose -f docker-compose.min.yml up
+
 version: '3.8'
 
 services:
+  # Neo4j Database (required for API)
+  neo4j:
+    image: neo4j:5.13-community
+    container_name: honestly-neo4j
+    ports:
+      - "7474:7474"  # Browser UI
+      - "7687:7687"  # Bolt connection
+    environment:
+      - NEO4J_AUTH=neo4j/test
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
+    volumes:
+      - neo4j_data:/data
+      - ./neo4j:/import
+    networks:
+      - honestly-net
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:7474"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache (optional but recommended)
+  redis:
+    image: redis:7-alpine
+    container_name: honestly-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - honestly-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Python Backend API (CPU-only for fast local dev)
   api:
     build:
-      context: .
-      dockerfile: docker/Dockerfile.api
+      context: ./backend-python
+      dockerfile: ../docker/Dockerfile.api-local
     container_name: honestly-api
+    ports:
+      - "8000:8000"
     environment:
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USER=neo4j
       - NEO4J_PASS=test
+      - REDIS_URL=redis://redis:6379/0
       - DISABLE_KAFKA=true
-      - DISABLE_FAISS=true
-      - DISABLE_FABRIC=true
-      - NODE_OPTIONS=--max-old-space-size=4096
-    ports:
-      - "8000:8000"
+      - LOG_LEVEL=INFO
     depends_on:
-      - neo4j
+      neo4j:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
-      - honestly-min
-    # Resource limits for API (simple circuits only)
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 1G
+      - honestly-net
 
-  neo4j:
-    image: neo4j:5.13
-    container_name: honestly-neo4j-min
+  # ConductMe Frontend (Next.js)
+  conductme:
+    image: node:20-alpine
+    container_name: honestly-conductme
+    working_dir: /app
     ports:
-      - "7474:7474"
-      - "7687:7687"
+      - "3000:3000"
+    volumes:
+      - ./conductme:/app
+      - conductme_modules:/app/node_modules
+    command: sh -c "npm install && npm run dev -- --hostname 0.0.0.0 --port 3000"
     environment:
-      - NEO4J_AUTH=neo4j/test
-      - NEO4J_dbms_security_procedures_unrestricted=apoc.*
-      - NEO4J_dbms_security_procedures_allowlist=apoc.*
-    volumes:
-      - neo4j_data_min:/data
-      - ./neo4j:/import
+      - NODE_ENV=development
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
     networks:
-      - honestly-min
-
-  frontend:
-    image: node:18
-    container_name: honestly-frontend
-    working_dir: /app/frontend-app
-    volumes:
-      - ./:/app
-    command: bash -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
-    ports:
-      - "5173:5173"
-    depends_on:
-      - api
-    networks:
-      - honestly-min
+      - honestly-net
 
 volumes:
-  neo4j_data_min:
+  neo4j_data:
+  conductme_modules:
 
 networks:
-  honestly-min:
+  honestly-net:
     driver: bridge
-

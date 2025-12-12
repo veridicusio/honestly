@@ -1,20 +1,20 @@
+# Lightweight Docker image for local development (CPU-only)
+# Build time: ~1-2 minutes instead of 10+ minutes
+
 FROM python:3.11-slim
 
-# Install build tools
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy requirements first (for caching)
-COPY requirements.txt ./
+# Use CPU-only requirements for much faster build
+COPY requirements-cpu.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the backend code
 COPY . .
 
-# Environment defaults
 ENV NEO4J_URI=bolt://neo4j:7687
 ENV NEO4J_USER=neo4j
 ENV NEO4J_PASS=test

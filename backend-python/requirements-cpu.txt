@@ -1,0 +1,37 @@
+# CPU-only requirements for local development
+# Much faster to install - no CUDA dependencies
+
+fastapi==0.115.5
+uvicorn[standard]==0.32.0
+ariadne==0.23.0
+py2neo==2021.2.4
+python-dotenv==1.0.1
+numpy==1.26.4
+
+# Vault dependencies
+cryptography>=41.0.0
+qrcode[pil]>=7.4.2
+pyjwt>=2.8.0
+pydantic>=2.0.0
+
+# Production dependencies
+redis>=5.0.0
+
+# ML dependencies - CPU ONLY (much smaller!)
+scikit-learn>=1.3.0
+faiss-cpu==1.8.0.post1
+
+# PyTorch CPU-only (much smaller than CUDA version)
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch>=2.0.0
+
+# Sentence transformers (will use CPU torch)
+sentence-transformers==3.1.1
+
+# Kafka
+kafka-python==2.0.2
+
+# Testing dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+httpx>=0.24.0

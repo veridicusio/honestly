@@ -12,7 +12,7 @@ import {
   SignalProof,
   createIdentity,
   deriveFromHonestlyProof
-} from './identity.js';
+} from './identity';
 
 export interface AIAction {
   id: string;
