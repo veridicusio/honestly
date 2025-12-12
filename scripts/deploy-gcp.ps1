@@ -32,7 +32,7 @@ gcloud run deploy honestly-api `
     --cpu 1 `
     --min-instances 0 `
     --max-instances 10 `
-    --set-env-vars "ENVIRONMENT=production" `
+    --set-env-vars "ENVIRONMENT=production,NEO4J_URI=neo4j+s://138d4aa8.databases.neo4j.io:7687,NEO4J_USER=neo4j,NEO4J_PASS=NI2IG3T5blqKFHBMrl7HJEReIITtnnlkwCYC0xGgo6Y" `
     --project $Project
 
 if ($LASTEXITCODE -ne 0) {
