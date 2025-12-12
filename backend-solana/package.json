@@ -25,7 +25,7 @@
     "@types/mocha": "^10.0.0",
     "@types/chai": "^4.3.0",
     "typescript": "^5.0.0",
-    "merkletreejs": "^3.0.1",
+    "merkletreejs": "^0.6.0",
     "js-sha3": "^0.8.0",
     "csv-parse": "^5.5.0",
     "chai": "^4.3.0",
