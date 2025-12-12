@@ -2,7 +2,7 @@
 
 ## Protocol vs Token
 
-### Protocol Name: **Honestly**
+### Protocol Name: *Veridicus"
 - The overall project/platform name
 - Used in:
   - Documentation
@@ -11,11 +11,11 @@
   - API endpoints
   - Contract comments
 
-### Token Name: **VERITAS** (Future)
+### Token Name: **VERIDICUS** (Future)
 - The governance/value capture token (when we launch it)
 - Used in:
-  - Token contract: `VeritasToken.sol`
-  - Token symbol: `VERITAS`
+  - Token contract: `VeridicusToken.sol`
+  - Token symbol: `VERIDICUS`
   - Governance contracts
   - Revenue sharing
 
@@ -30,14 +30,14 @@
 
 ✅ **Correct**:
 - "Honestly protocol" (project name)
-- "VERITAS token" (future governance token)
+- "veridicus token" (future governance token)
 - "LINK staking" (current staking token)
-- `VeritasToken.sol` (future contract)
+- `VeridicusToken.sol` (future contract)
 - `HonestlyStaking.sol` (current - uses LINK)
 
 ❌ **Incorrect**:
-- "Honestly token" (should be VERITAS)
-- `HonestlyToken.sol` (should be VeritasToken.sol)
+- "Honestly token" (should be VERIDICUS)
+- `HonestlyToken.sol` (should be VeridicusToken.sol)
 
 ## File Naming
 
@@ -49,16 +49,16 @@
 - `ZkMLVerifier.sol` - No token
 
 ### Future Contracts (Phase 4.5+)
-- `VeritasToken.sol` - VERITAS ERC20 token
+- `VeritasToken.sol` - VERIDICUS ERC20 token
 - `VeritasGovernance.sol` - DAO governance
-- `VeritasStaking.sol` - VERITAS staking for bonuses
+- `VeritasStaking.sol` - VERIDICUS staking for bonuses
 
 ## Branding
 
 **Protocol**: Honestly  
 **Tagline**: "Verifiable AI Agent Identity Protocol"  
-**Token**: VERITAS (when launched)  
-**Token Symbol**: `VERITAS` or `VTS`
+**Token**: VERIDICUS (when launched)  
+**Token Symbol**: `VERIDICUS` or `VTS`
 
 ---
 
